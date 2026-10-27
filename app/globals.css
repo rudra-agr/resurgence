@@ -1,0 +1,197 @@
+:root {
+  --bg: #eef3f4;
+  --ink: #14262b;
+  --teal: #0b6e7f;
+  --warn: #c2410c;
+  --line: #c9d6d9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 system-ui, sans-serif;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 8px;
+}
+
+.sub {
+  margin: 4px 0 20px;
+  max-width: 60ch;
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 860px) {
+  .cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.ag-theme-quartz {
+  width: 100%;
+}
+
+button {
+  background: var(--teal);
+  color: #fff;
+  border: 0;
+  border-radius: 4px;
+  padding: 9px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--warn);
+  outline-offset: 2px;
+}
+
+input,
+textarea,
+select {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+  width: 100%;
+  margin: 0 0 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+}
+
+td,
+th {
+  text-align: left;
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+.err {
+  color: var(--warn);
+}
+
+.note {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.banner {
+  background: #fff4d6;
+  border: 1px solid #e3c870;
+  border-radius: 4px;
+  padding: 6px 12px;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+}
+
+.tl {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--line);
+}
+
+.tl li {
+  margin: 0 0 12px;
+  padding-left: 10px;
+  position: relative;
+}
+
+.tl li::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 7px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
+.tl li.pending::before {
+  background: #fff;
+  border: 2px solid #9aa9ad;
+}
+
+.tl li.pending {
+  opacity: 0.7;
+}
+
+.tl .what {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.tl small {
+  display: block;
+  opacity: 0.65;
+}
+
+.tag {
+  margin-left: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #fff4d6;
+  border: 1px solid #e3c870;
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+select {
+  background: #fff;
+}
+
+button.alt {
+  background: #fff;
+  color: var(--teal);
+  border: 1px solid var(--teal);
+  margin-bottom: 8px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

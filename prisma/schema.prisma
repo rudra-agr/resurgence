@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Everything place-specific lives here, so the app is not tied to one country.
+model Region {
+  id             String        @id @default(cuid())
+  name           String
+  country        String
+  currency       String        @default("USD")
+  languages      String[]
+  authorityLabel String        @default("Local Authority")
+  coordinators   Coordinator[]
+  needs          Need[]
+}
+
+model Coordinator {
+  id       String  @id @default(cuid())
+  name     String
+  verified Boolean @default(false) // demo mock, flipped by an admin later
+  regionId String
+  region   Region  @relation(fields: [regionId], references: [id])
+  needs    Need[]
+  user     User?
+}
+
+// Seeded logins. Role is ADMIN or COORDINATOR. Donors do not need an account.
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  name          String
+  passwordHash  String
+  role          String
+  coordinatorId String?      @unique
+  coordinator   Coordinator? @relation(fields: [coordinatorId], references: [id])
+}
+
+model Need {
+  id            String      @id @default(cuid())
+  title         String
+  location      String
+  families      Int         @default(0)
+  urgency       String      @default("High")
+  status        String      @default("OPEN")
+  originalText  String?
+  language      String?
+  target        Float       @default(0)
+  raised        Float       @default(0)
+  createdAt     DateTime    @default(now())
+  regionId      String
+  region        Region      @relation(fields: [regionId], references: [id])
+  coordinatorId String?
+  coordinator   Coordinator? @relation(fields: [coordinatorId], references: [id])
+  items         Item[]
+  fundings      Funding[]
+  events        AuditEvent[]
+
+  @@index([regionId])
+  @@index([status])
+}
+
+model Item {
+  id       String         @id @default(cuid())
+  name     String
+  quantity Int            @default(1)
+  unit     String?
+  category String?
+  needId   String
+  need     Need           @relation(fields: [needId], references: [id], onDelete: Cascade)
+  matches  ProductMatch[]
+
+  @@index([needId])
+}
+
+model ProductMatch {
+  id          String   @id @default(cuid())
+  source      String
+  productName String
+  price       Float
+  currency    String   @default("USD")
+  url         String?
+  retrievedAt DateTime @default(now())
+  approved    Boolean  @default(false)
+  manual      Boolean  @default(false) // typed in by the coordinator, not from Channel3
+  itemId      String
+  item        Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+}
+
+model Funding {
+  id        String   @id @default(cuid())
+  orderId   String   @unique // one PayPal order can only ever be recorded once
+  captureId String   @unique // one capture can only ever be recorded once
+  amount    Float
+  currency  String   @default("USD")
+  payer     String   @default("Anonymous")
+  status    String   @default("CAPTURED")
+  isSandbox Boolean  @default(true)
+  createdAt DateTime @default(now())
+  needId    String
+  need      Need     @relation(fields: [needId], references: [id])
+
+  @@index([needId])
+}
+
+// Append-only: rows are only ever inserted, never updated or deleted.
+model AuditEvent {
+  id          String   @id @default(cuid())
+  type        String
+  actor       String
+  message     String
+  isSimulated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  needId      String
+  need        Need     @relation(fields: [needId], references: [id], onDelete: Cascade)
+
+  @@index([needId, createdAt])
+}
