@@ -15,7 +15,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@paypal/react-paypal-js": "8.7.0",
+    "@paypal/react-paypal-js": "8.9.2",
     "@prisma/client": "6.19.3",
     "ag-grid-community": "32.3.3",
     "ag-grid-react": "32.3.3",
