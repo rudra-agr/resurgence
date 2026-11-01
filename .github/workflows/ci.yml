@@ -31,8 +31,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-        continue-on-error:true
       - run: npm run audit
+        continue-on-error: true # known advisories need major upgrades
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
