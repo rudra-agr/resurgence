@@ -1,0 +1,37 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      # Dummy placeholders so the build can run. These are NOT real secrets.
+      DATABASE_URL: postgresql://user:pass@localhost:5432/ci
+      SESSION_SECRET: ci-placeholder-session-secret-0000000000000000
+      NEXT_PUBLIC_PAYPAL_CLIENT_ID: ci-placeholder
+      PAYPAL_CLIENT_ID: ci-placeholder
+      PAYPAL_CLIENT_SECRET: ci-placeholder
+      CHANNEL3_API_KEY: ci-placeholder
+      GROQ_API_KEY: ci-placeholder
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks scans history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run audit
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

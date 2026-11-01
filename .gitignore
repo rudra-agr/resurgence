@@ -7,5 +7,10 @@ build/
 !.env.example
 .DS_Store
 npm-debug.log*
+
+# SECURITY: build artefacts and key material
 *.tsbuildinfo
-!.env.example
+.next/
+coverage/
+*.pem
+*.key

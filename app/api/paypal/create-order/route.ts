@@ -3,13 +3,22 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { createOrder, PayPalError } from '@/lib/paypal';
 import { round2 } from '@/lib/products';
+import { assertSameOrigin, requireJson } from '@/lib/csrf';
+import { clientIp, limit, MIN } from '@/lib/rateLimit';
 
 const Body = z.object({
   needId: z.string().min(1).max(60),
   amount: z.coerce.number().min(1, 'Minimum donation is 1.').max(10_000, 'Maximum is 10,000.'),
 });
 
+// SECURITY: public route (donors need no account), so it is origin-checked and rate limited per IP
+// before any database or PayPal call, to stop card-testing and PayPal API abuse.
 export async function POST(req: Request) {
+  const blocked = assertSameOrigin(req) ?? requireJson(req);
+  if (blocked) return blocked;
+  const limited = limit(`create:${clientIp(req)}`, 10, MIN);
+  if (limited) return limited;
+
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
 

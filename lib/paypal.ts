@@ -1,5 +1,7 @@
 // PayPal Orders v2 (sandbox). Server-side only.
 const BASE = process.env.PAYPAL_BASE || 'https://api-m.sandbox.paypal.com';
+// SECURITY: every outbound PayPal call has a timeout so a hung request cannot tie up the server.
+const TIMEOUT_MS = 15000;
 
 export class PayPalError extends Error {
   constructor(message: string, public status: number, public issue?: string) {
@@ -16,7 +18,11 @@ export type PayPalOrder = {
   id: string;
   status: string;
   payer?: { name?: { given_name?: string } };
-  purchase_units?: { custom_id?: string; payments?: { captures?: PayPalCapture[] } }[];
+  purchase_units?: {
+    custom_id?: string;
+    amount?: { value: string; currency_code: string };
+    payments?: { captures?: PayPalCapture[] };
+  }[];
 };
 
 async function token(): Promise<string> {
@@ -27,6 +33,7 @@ async function token(): Promise<string> {
     method: 'POST',
     headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: 'grant_type=client_credentials',
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!r.ok) throw new PayPalError('PayPal login failed. Check the sandbox keys.', r.status);
   return ((await r.json()) as { access_token: string }).access_token;
@@ -36,6 +43,7 @@ async function call(path: string, init: RequestInit & { requestId?: string }): P
   const { requestId, ...rest } = init;
   const r = await fetch(`${BASE}${path}`, {
     ...rest,
+    signal: AbortSignal.timeout(TIMEOUT_MS),
     headers: {
       Authorization: `Bearer ${await token()}`,
       'Content-Type': 'application/json',

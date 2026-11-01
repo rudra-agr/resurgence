@@ -1,10 +1,13 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { pvMatches, pvOf, signToken, verifyToken } from '@/lib/token';
 
-const COOKIE = 'rl_session';
 const TTL_SECONDS = 8 * 3600;
+const isProd = () => process.env.NODE_ENV === 'production';
+// SECURITY: the __Host- prefix makes browsers insist on Secure + path=/ + no Domain.
+// Set, read and clear all use this one computed name.
+const cookieName = () => (isProd() ? '__Host-rl_session' : 'rl_session');
 
 export type Role = 'ADMIN' | 'COORDINATOR';
 export type SessionUser = {
@@ -21,51 +24,34 @@ function secret(): string {
   return s;
 }
 
-const sign = (payload: string) => createHmac('sha256', secret()).update(payload).digest('base64url');
+const cookieOpts = () => ({
+  httpOnly: true,
+  sameSite: 'strict' as const, // SECURITY: strict (was lax). The app never needs the cookie on cross-site navigations.
+  secure: isProd(),
+  path: '/',
+});
 
-// The cookie holds only the user id and an expiry, signed so it cannot be forged or edited.
-function makeToken(uid: string): string {
-  const payload = Buffer.from(
-    JSON.stringify({ uid, exp: Math.floor(Date.now() / 1000) + TTL_SECONDS })
-  ).toString('base64url');
-  return `${payload}.${sign(payload)}`;
-}
-
-function readToken(token: string): string | null {
-  const [payload, sig] = token.split('.');
-  if (!payload || !sig) return null;
-  const a = Buffer.from(sig);
-  const b = Buffer.from(sign(payload));
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-  try {
-    const { uid, exp } = JSON.parse(Buffer.from(payload, 'base64url').toString());
-    return typeof uid === 'string' && exp > Date.now() / 1000 ? uid : null;
-  } catch {
-    return null;
-  }
-}
-
-export function setSessionCookie(uid: string) {
-  cookies().set(COOKIE, makeToken(uid), {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
+export function setSessionCookie(uid: string, passwordHash: string) {
+  cookies().set(cookieName(), signToken(secret(), uid, pvOf(passwordHash), TTL_SECONDS), {
+    ...cookieOpts(),
     maxAge: TTL_SECONDS,
   });
 }
 
 export function clearSessionCookie() {
-  cookies().delete(COOKIE);
+  // SECURITY: overwrite with an expired cookie carrying the same attributes. A bare delete would
+  // omit Secure, and browsers refuse to change a __Host- cookie without it.
+  cookies().set(cookieName(), '', { ...cookieOpts(), maxAge: 0 });
 }
 
 // Role is read from the database on every request, so changes apply immediately.
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const token = cookies().get(COOKIE)?.value;
-  const uid = token ? readToken(token) : null;
-  if (!uid) return null;
-  const u = await prisma.user.findUnique({ where: { id: uid } });
-  if (!u) return null;
+  const token = cookies().get(cookieName())?.value;
+  const t = token ? verifyToken(secret(), token) : null;
+  if (!t) return null;
+  const u = await prisma.user.findUnique({ where: { id: t.uid } });
+  // SECURITY: a changed password changes pv, so old cookies stop working.
+  if (!u || !pvMatches(t.pv, u.passwordHash)) return null;
   return {
     id: u.id,
     email: u.email,

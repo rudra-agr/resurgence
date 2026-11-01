@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { requireRole } from '@/lib/auth';
+import { assertSameOrigin, requireJson } from '@/lib/csrf';
+import { limit, MIN } from '@/lib/rateLimit';
+import { maskId, maskPayer } from '@/lib/mask';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,10 +15,12 @@ export async function GET() {
     prisma.need.findMany({
       orderBy: { createdAt: 'asc' },
       include: { items: true, coordinator: true, region: true },
+      take: 200, // SECURITY: bound the public response
     }),
     prisma.funding.findMany({
       orderBy: { createdAt: 'desc' },
       include: { need: { select: { title: true } } },
+      take: 500, // SECURITY: most recent 500 only
     }),
   ]);
 
@@ -41,9 +46,10 @@ export async function GET() {
       needTitle: f.need.title,
       amount: f.amount,
       currency: f.currency,
-      payer: f.payer,
-      paypalOrderId: f.orderId,
-      paypalCaptureId: f.captureId,
+      // SECURITY: same keys as before, masked values (last 4 characters / first initial).
+      payer: maskPayer(f.payer),
+      paypalOrderId: maskId(f.orderId),
+      paypalCaptureId: maskId(f.captureId),
       createdAt: f.createdAt,
     })),
   });
@@ -67,10 +73,15 @@ const NeedBody = z.object({
     .max(20),
 });
 
+// SECURITY: requires role COORDINATOR or ADMIN (only coordinator accounts can actually post).
 export async function POST(req: Request) {
+  const blocked = assertSameOrigin(req) ?? requireJson(req);
+  if (blocked) return blocked;
   const auth = await requireRole('COORDINATOR', 'ADMIN');
   if ('error' in auth) return auth.error;
   const { user } = auth;
+  const limited = limit(`needs:${user.id}`, 30, MIN);
+  if (limited) return limited;
 
   const parsed = NeedBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {

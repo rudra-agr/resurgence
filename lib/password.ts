@@ -16,3 +16,12 @@ export async function verifyPassword(pw: string, stored: string): Promise<boolea
   const got = await derive(pw, Buffer.from(s, 'hex'));
   return want.length === got.length && timingSafeEqual(want, got);
 }
+
+// SECURITY: unknown emails must cost the same time as known ones, or response timing reveals
+// which accounts exist. The dummy hash is made once, on first use, then cached.
+let dummy: Promise<string> | null = null;
+export async function verifyDummy(pw: string): Promise<boolean> {
+  dummy ??= hashPassword(randomBytes(16).toString('hex'));
+  await verifyPassword(pw, await dummy);
+  return false; // always false: there is no real account behind it
+}

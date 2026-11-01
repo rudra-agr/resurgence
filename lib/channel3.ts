@@ -1,3 +1,5 @@
+import { safeUrl } from '@/lib/validate';
+
 export type Candidate = {
   title: string;
   price: number;
@@ -40,7 +42,8 @@ export async function searchProducts(query: string, take = 3): Promise<Candidate
       price,
       currency: currency ? currency.toUpperCase() : null,
       retailer: o?.domain || o?.merchant_name || 'channel3',
-      url: o?.url || null,
+      // SECURITY: keep only http(s) links; anything else (e.g. javascript:) becomes null.
+      url: safeUrl(o?.url),
     });
     if (out.length === take) break;
   }

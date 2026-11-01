@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db';
 import { requireRole, canManage } from '@/lib/auth';
 import { searchProducts } from '@/lib/channel3';
 import { loadProducts } from '@/lib/products';
+import { assertSameOrigin } from '@/lib/csrf';
+import { limit, MIN } from '@/lib/rateLimit';
+import { isValidId } from '@/lib/validate';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,15 +13,22 @@ type Ctx = { params: { id: string } };
 
 // Public and read-only: shows stored matches. It never searches or writes anything.
 export async function GET(_req: Request, { params }: Ctx) {
+  if (!isValidId(params.id)) return NextResponse.json({ error: 'Invalid id.' }, { status: 400 });
   const need = await prisma.need.findUnique({ where: { id: params.id }, select: { id: true } });
   if (!need) return NextResponse.json({ error: 'Need not found.' }, { status: 404 });
   return NextResponse.json(await loadProducts(params.id));
 }
 
 // Coordinator action: run a live Channel3 search and store candidates for review.
-export async function POST(_req: Request, { params }: Ctx) {
+// SECURITY: requires role COORDINATOR or ADMIN (and ownership via canManage). No request body.
+export async function POST(req: Request, { params }: Ctx) {
+  const blocked = assertSameOrigin(req);
+  if (blocked) return blocked;
+  if (!isValidId(params.id)) return NextResponse.json({ error: 'Invalid id.' }, { status: 400 });
   const auth = await requireRole('COORDINATOR', 'ADMIN');
   if ('error' in auth) return auth.error;
+  const limited = limit(`search:${auth.user.id}`, 10, MIN);
+  if (limited) return limited;
 
   const need = await prisma.need.findUnique({
     where: { id: params.id },
@@ -44,7 +54,8 @@ export async function POST(_req: Request, { params }: Ctx) {
         prisma.productMatch.createMany({
           data: usable.map((c) => ({
             itemId: item.id,
-            source: c.retailer,
+            // SECURITY/visibility: tell the coordinator when the retailer gave no currency.
+            source: c.currency ? c.retailer : `${c.retailer} (currency not provided by retailer)`,
             productName: c.title,
             price: c.price,
             currency: need.region.currency,

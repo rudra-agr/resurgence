@@ -16,10 +16,15 @@ const needs = [
 ];
 
 async function main() {
+  // SECURITY: never seed demo accounts into production by accident. Opt in on the command line:
+  //   ALLOW_PROD_SEED=yes npx prisma db seed   (do not put this in any env file)
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PROD_SEED !== 'yes') {
+    throw new Error('Refusing to seed in production. Pass ALLOW_PROD_SEED=yes on the command line to override.');
+  }
   const adminPw = process.env.SEED_ADMIN_PASSWORD;
   const coordPw = process.env.SEED_COORDINATOR_PASSWORD;
-  if (!adminPw || !coordPw || adminPw.length < 8 || coordPw.length < 8) {
-    throw new Error('Set SEED_ADMIN_PASSWORD and SEED_COORDINATOR_PASSWORD (8+ characters) in .env.local');
+  if (!adminPw || !coordPw || adminPw.length < 12 || coordPw.length < 12) {
+    throw new Error('Set SEED_ADMIN_PASSWORD and SEED_COORDINATOR_PASSWORD (12+ characters) in your environment');
   }
 
   // Safe to run again: each piece is created only if missing.

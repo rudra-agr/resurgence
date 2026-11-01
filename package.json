@@ -1,34 +1,38 @@
 {
   "name": "reliefloop",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
     "postinstall": "prisma generate",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "audit": "npm audit --omit=dev --audit-level=high",
+    "test": "tsx --test tests/*.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@paypal/react-paypal-js": "8.7.0",
-    "@prisma/client": "^6.0.0",
+    "@prisma/client": "6.19.3",
     "ag-grid-community": "32.3.3",
     "ag-grid-react": "32.3.3",
-    "groq-sdk": "^1.6.0",
-    "next": "14.2.15",
-    "prisma": "^6.0.0",
+    "next": "14.2.35",
+    "prisma": "6.19.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "zod": "^3.25.76"
+    "zod": "3.25.76"
   },
   "devDependencies": {
-    "typescript": "^5.6.3",
-    "@types/node": "^20.16.0",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "tsx": "^4.19.2"
+    "typescript": "5.6.3",
+    "@types/node": "20.16.0",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "tsx": "4.19.2"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
