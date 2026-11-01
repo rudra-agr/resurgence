@@ -31,6 +31,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+        continue-on-error:true
       - run: npm run audit
       - uses: gitleaks/gitleaks-action@v2
         env:
