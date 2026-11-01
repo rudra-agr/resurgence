@@ -4,15 +4,14 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    # Stay on Next 14.x and React 18.x until a planned major upgrade.
+    # Major upgrades are planned manually (Next 14, React 18, Prisma 6, Zod 3, AG Grid 32).
     ignore:
-      - dependency-name: next
-        update-types: ["version-update:semver-major"]
-      - dependency-name: react
-        update-types: ["version-update:semver-major"]
-      - dependency-name: react-dom
+      - dependency-name: "*"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
