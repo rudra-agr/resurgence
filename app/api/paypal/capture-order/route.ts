@@ -74,7 +74,11 @@ export async function POST(req: Request) {
 
   const unit = order.purchase_units?.[0];
   const cap = unit?.payments?.captures?.[0];
-  const needId = unit?.custom_id; // set by our server when it created the order
+  //const needId = unit?.custom_id; // set by our server when it created the order
+    // custom_id was set by our server when it created the order. The capture response carries it on the
+  // capture, not always on the unit, so fall back to the capture and then to a fresh read of the order.
+  let needId = unit?.custom_id ?? cap?.custom_id;
+  if (!needId) needId = (await getOrder(orderId).catch(() => null))?.purchase_units?.[0]?.custom_id;
   const need = needId ? await prisma.need.findUnique({ where: { id: needId }, include: { region: true } }) : null;
 
   if (!need) return NextResponse.json({ error: 'This payment does not belong to a known need.' }, { status: 400 });

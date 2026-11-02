@@ -3,6 +3,7 @@ const BASE = process.env.PAYPAL_BASE || 'https://api-m.sandbox.paypal.com';
 // SECURITY: every outbound PayPal call has a timeout so a hung request cannot tie up the server.
 const TIMEOUT_MS = 15000;
 
+
 export class PayPalError extends Error {
   constructor(message: string, public status: number, public issue?: string) {
     super(message);
@@ -13,6 +14,7 @@ export type PayPalCapture = {
   id: string;
   status: string;
   amount: { value: string; currency_code: string };
+  custom_id?: string; //to read
 };
 export type PayPalOrder = {
   id: string;
