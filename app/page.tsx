@@ -81,8 +81,8 @@ export default function Home() {
 
   const needCols = useMemo<ColDef<NeedRow>[]>(
     () => [
-      { field: 'title', headerName: 'Need', flex: 1.2 },
-      { field: 'location', flex: 1 },
+      { field: 'title', headerName: 'Need', flex: 1.2 , minWidth: 170},
+      { field: 'location', flex: 1 ,minWidth:130 },
       { field: 'urgency', width: 105, cellStyle: (p) => (p.value === 'Critical' ? { color: '#c2410c', fontWeight: 600 } : null) },
       { field: 'families', width: 95 },
       { field: 'raised', width: 105, valueFormatter: (p) => money(p.value) },
@@ -91,6 +91,7 @@ export default function Home() {
       {
         headerName: 'Verification',
         flex: 1.3,
+        minWidth:210,
         valueGetter: (p) =>
           p.data ? (p.data.verified ? `Verified by ${p.data.authority} (mock)` : 'Unverified') : '',
       },
