@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 export const metadata: Metadata = {
-  title: 'ReliefLoop',
+  title: 'Resurgence',
   description: 'See exactly what your donation buys.',
 };
 

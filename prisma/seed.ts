@@ -39,14 +39,14 @@ async function main() {
     (await db.coordinator.create({ data: { name: 'Demo Coordinator', verified: true, regionId: region.id } }));
 
   await db.user.upsert({
-    where: { email: 'admin@reliefloop.demo' },
+    where: { email: 'admin@resurgence.demo' },
     update: { passwordHash: await hashPassword(adminPw) },
-    create: { email: 'admin@reliefloop.demo', name: 'Demo Admin', role: 'ADMIN', passwordHash: await hashPassword(adminPw) },
+    create: { email: 'admin@resurgence.demo', name: 'Demo Admin', role: 'ADMIN', passwordHash: await hashPassword(adminPw) },
   });
   await db.user.upsert({
-    where: { email: 'coordinator@reliefloop.demo' },
+    where: { email: 'coordinator@resurgence.demo' },
     update: { passwordHash: await hashPassword(coordPw), coordinatorId: coord.id },
-    create: { email: 'coordinator@reliefloop.demo', name: coord.name, role: 'COORDINATOR', coordinatorId: coord.id, passwordHash: await hashPassword(coordPw) },
+    create: { email: 'coordinator@resurgence.demo', name: coord.name, role: 'COORDINATOR', coordinatorId: coord.id, passwordHash: await hashPassword(coordPw) },
   });
 
   if (!(await db.need.count())) {
@@ -61,7 +61,7 @@ async function main() {
       });
     }
   }
-  console.log('Seeded. Logins: admin@reliefloop.demo and coordinator@reliefloop.demo');
+  console.log('Seeded. Logins: admin@resurgence.demo and coordinator@resurgence.demo');
 }
 
 main()

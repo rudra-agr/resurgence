@@ -135,7 +135,7 @@ export default function Home() {
   return (
     <main>
       <div className="banner">Sandbox demo: no real money moves and no real aid is delivered.</div>
-      <h1>ReliefLoop</h1>
+      <h1>Resurgence</h1>
       <p className="sub">
         {data.region ? `${data.region.name}, ${data.region.country}. ` : ''}Pick a need, see the real
         products your money buys, and donate.

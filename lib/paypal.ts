@@ -72,7 +72,7 @@ export const createOrder = (needId: string, amount: number, currency: string) =>
       purchase_units: [
         {
           custom_id: needId, // read back at capture time, so the browser never says which need was paid
-          description: `ReliefLoop need ${needId}`,
+          description: `Resurgence need ${needId}`,
           amount: { currency_code: currency, value: amount.toFixed(2) },
         },
       ],

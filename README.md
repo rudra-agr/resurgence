@@ -1,4 +1,4 @@
-# ReliefLoop (draft v0.1)
+# Resurgence
 Flow: coordinator posts need -> Channel3 finds real products -> donor pays (PayPal sandbox) -> ledger updates.
 
 ## Run
