@@ -13,6 +13,8 @@ const needs = [
     items: [{ name: 'wool blanket', quantity: 80 }] },
   { title: 'First aid kits', location: 'Camp A', families: 25, urgency: 'High',
     items: [{ name: 'first aid kit', quantity: 25 }] },
+  { title: 'Infant care supplies', location: 'Village D', families: 30, urgency: 'Medium',
+    items: [{ name: 'infant formula', quantity: 60 }, { name: 'diapers pack', quantity: 120 }] },
 ];
 
 async function main() {
