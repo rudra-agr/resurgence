@@ -36,6 +36,9 @@ export default function Home() {
   const [urgentOnly, setUrgentOnly] = useState(false);
   const [offline, setOffline] = useState(false);
 
+  const [evNote, setEvNote] = useState('');
+  const [evMsg, setEvMsg] = useState('');
+
   const cur = data.region?.currency ?? 'USD';
   const sel = data.needs.find((n) => n.id === selId) ?? null;
   const canEdit = !!me && !!sel && (me.role === 'ADMIN' || me.coordinatorId === sel.coordinatorId);
@@ -114,6 +117,16 @@ export default function Home() {
         : data.needs,
     [data.needs, urgentOnly]
   );
+
+    async function recordEvidence(type: 'PURCHASED' | 'DELIVERED') {
+    if (!sel) return;
+    const { ok, j } = await send(`/api/needs/${sel.id}/evidence`, { type, note: evNote });
+    if (!ok) return setEvMsg(j.error || 'Could not record the evidence.');
+    setEvNote('');
+    setEvMsg('');
+    const r = await send(`/api/needs/${sel.id}/events`, undefined, 'GET');
+    if (r.ok) setEvents(r.j);
+  }
 
   const has = (t: string) => events.some((e) => e.type === t);
   const remaining = sel ? Math.max(0, sel.target - sel.raised) : 0;
@@ -288,6 +301,21 @@ export default function Home() {
                   </li>
                 )}
               </ol>
+                            {me?.role === 'ADMIN' && sel.status === 'FUNDED' && !(has('PURCHASED') && has('DELIVERED')) && (
+                <div>
+                  <input
+                    value={evNote}
+                    onChange={(e) => setEvNote(e.target.value)}
+                    placeholder="Evidence note, e.g. invoice reference"
+                    maxLength={300}
+                  />
+                  <button onClick={() => recordEvidence(has('PURCHASED') ? 'DELIVERED' : 'PURCHASED')}>
+                    Record {has('PURCHASED') ? 'delivery' : 'purchase'} (TEST evidence)
+                  </button>
+                  {evMsg && <p className="note">{evMsg}</p>}
+                  <p className="note">Admin only. Saved as test evidence, not a real purchase.</p>
+                </div>
+              )}
             </div>
           )}
 
