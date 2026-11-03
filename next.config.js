@@ -8,6 +8,7 @@ const csp = [
   // 'unsafe-eval' is needed by Next.js hot reload in development only.
   `script-src 'self' 'unsafe-inline' https://*.paypal.com https://*.paypalobjects.com${isProd ? '' : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
   "img-src 'self' data: https://*.paypal.com https://*.paypalobjects.com",
   "connect-src 'self' https://*.paypal.com https://*.paypalobjects.com",
   'frame-src https://*.paypal.com',
