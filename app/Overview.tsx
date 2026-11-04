@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import type { Donation, NeedRow } from '@/lib/types';
+import { STAGES, URGENCY_ORDER, slug, stageOf } from '@/lib/ledger';
 
 type Props = {
   needs: NeedRow[];
@@ -10,13 +11,6 @@ type Props = {
   onPick: (id: string) => void;
 };
 
-const URGENCY_ORDER: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
-
-const stageOf = (n: NeedRow) =>
-  n.target <= 0 ? 'Not priced' : n.status === 'FUNDED' ? 'Funded' : n.raised > 0 ? 'Partial' : 'Unfunded';
-
-const slug = (s: string) => s.toLowerCase().replace(/\s+/g, '-');
-const STAGES = ['Not priced', 'Unfunded', 'Partial', 'Funded'];
 
 export default function Overview({ needs, donations, money, onPick }: Props) {
   const sorted = useMemo(
