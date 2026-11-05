@@ -6,11 +6,20 @@ import type { ColDef } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 import type { Donation } from '@/lib/types';
+import { send } from '@/lib/client';
 
-export default function DonationsGrid({ donations, money, cur }: { donations: Donation[]; money: (v: number) => string; cur: string }) {
+export default function DonationsGrid({ donations, money, cur, isAdmin, onChanged }: {
+  donations: Donation[]; money: (v: number) => string; cur: string; isAdmin?: boolean; onChanged?: () => void;
+}) {
   const grid = useRef<AgGridReact<Donation>>(null);
   const [q, setQ] = useState('');
 
+  async function refund(id: string) {
+    if (!confirm('Refund this sandbox payment in full?')) return;
+    const { ok, j } = await send('/api/admin/refund', { fundingId: id });
+    if (!ok) alert(j.error || 'Refund failed.');
+    onChanged?.();
+  }
   const cols = useMemo<ColDef<Donation>[]>(
     () => [
       { field: 'createdAt', headerName: 'When', flex: 1, minWidth: 170, valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleString() : '') },
@@ -18,18 +27,32 @@ export default function DonationsGrid({ donations, money, cur }: { donations: Do
       { field: 'payer', minWidth: 100 },
       { field: 'amount', minWidth: 100, valueFormatter: (p) => money(p.value) },
       { field: 'paypalCaptureId', headerName: 'PayPal capture (sandbox)', flex: 1, minWidth: 190 },
+            { field: 'status', headerName: 'Status', minWidth: 110 },
+      ...(isAdmin
+        ? [
+            {
+              headerName: '',
+              minWidth: 110,
+              sortable: false,
+              cellRenderer: (p: { data?: Donation }) =>
+                p.data && p.data.id !== 'total' && p.data.status !== 'REFUNDED' ? (
+                  <button className="alt" onClick={() => refund(p.data!.id)}>Refund</button>
+                ) : null,
+            } as ColDef<Donation>,
+          ]
+        : []),
     ],
-    [money]
+    [money, isAdmin]
   );
 
+  
   const total = useMemo<Donation[]>(
     () => [
       {
         id: 'total',
         needId: '',
         needTitle: `Total (${donations.length} donations)`,
-        amount: donations.reduce((a, d) => a + d.amount, 0),
-        currency: cur,
+        amount: donations.filter((d) => d.status !== 'REFUNDED').reduce((a, d) => a + d.amount, 0),        currency: cur,
         payer: '',
         paypalOrderId: '',
         paypalCaptureId: '',

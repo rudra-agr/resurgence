@@ -32,6 +32,7 @@ export type Donation = {
   paypalOrderId: string;
   paypalCaptureId: string;
   createdAt: string;
+  status?: string;
 };
 
 export type LedgerData = {
