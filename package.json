@@ -9,7 +9,8 @@
     "postinstall": "prisma generate",
     "typecheck": "tsc --noEmit",
     "audit": "npm audit --omit=dev --audit-level=high",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "seed:disaster": "tsx prisma/seed_disaster.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -17,6 +18,7 @@
   "dependencies": {
     "@paypal/react-paypal-js": "8.7.0",
     "@prisma/client": "6.19.3",
+    "ag-charts-react": "10.3.8",
     "ag-grid-community": "32.3.3",
     "ag-grid-react": "32.3.3",
     "chart.js": "^4.6.1",
