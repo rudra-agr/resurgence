@@ -141,3 +141,49 @@ model FundSnapshot {
   nprBillion     Float
   createdAt      DateTime @default(now())
 }
+
+// ---- Disaster context (read by the admin analytics dashboard) ----
+model DisasterEvent {
+  id                    String             @id @default(cuid())
+  name                  String
+  date                  DateTime
+  triggerType           String
+  glacierName           String?
+  collapseAreaKm2       Float?
+  waveHeightM           Float?
+  affectedRivers        String[]
+  districtsPrimary      String[]
+  districtsOther        String[]
+  priorRainfallReported Boolean            @default(false)
+  previousGLOF          String?
+  createdAt             DateTime           @default(now())
+  casualtySnapshots     CasualtySnapshot[]
+  buildingDamage        BuildingDamage[]
+}
+
+// Dated response snapshots, not final totals. A null means that figure was not reported that day.
+model CasualtySnapshot {
+  id              String        @id @default(cuid())
+  disasterEventId String
+  disasterEvent   DisasterEvent @relation(fields: [disasterEventId], references: [id], onDelete: Cascade)
+  snapshotDate    DateTime
+  bodiesRecovered Int?
+  missing         Int?
+  rescued         Int?
+  injured         Int?
+  source          String
+
+  @@index([disasterEventId])
+}
+
+model BuildingDamage {
+  id              String        @id @default(cuid())
+  disasterEventId String
+  disasterEvent   DisasterEvent @relation(fields: [disasterEventId], references: [id], onDelete: Cascade)
+  settlement      String
+  totalAssessed   Int
+  affected        Int
+  source          String
+
+  @@index([disasterEventId])
+}
