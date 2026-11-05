@@ -122,3 +122,22 @@ model AuditEvent {
 
   @@index([needId, createdAt])
 }
+
+model ReliefContribution {
+  id          String   @id @default(cuid())
+  contributor String
+  type        String
+  scope       String
+  amountLabel String
+  nprMillion  Float
+  nprArba     Float?
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+model FundSnapshot {
+  id             String   @id @default(cuid())
+  daysAfterEvent Int
+  nprBillion     Float
+  createdAt      DateTime @default(now())
+}

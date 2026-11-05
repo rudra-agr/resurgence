@@ -23,6 +23,7 @@ export function SiteNav() {
     ['/needs', 'Needs'],
     ['/donations', 'Donations ledger'],
     ['/#how', 'How it works'],
+    ['/story', 'Our story'],
     ...(me?.coordinatorId ? ([['/post', 'Post a need']] as [string, string][]) : []),
   ];
   const on = (href: string) => (href.startsWith('/#') ? false : path === href || path.startsWith(href + '/'));
