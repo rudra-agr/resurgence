@@ -1,5 +1,7 @@
 'use client';
 
+import { DisasterBanner } from '@/app/components/DisasterBanner';
+import '@/app/components/banner.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -40,7 +42,9 @@ export default function Home() {
   const funded = data.needs.filter((n) => n.status === 'FUNDED').length;
 
   return (
+    
     <>
+    <DisasterBanner />
       <section className="hero">
         <div className="wrap hero-grid">
           <div>

@@ -1,11 +1,3 @@
-/* app/story/story.css
-   Scoped to .story-root — does not bleed into the rest of the app.
-   Import this at the top of StoryClient.tsx: import './story.css';
-   Theme variables are set via data-story-theme on <html>;
-   the .story-root overrides cascade from there.
-*/
-
-/* ── TOKENS ── */
 [data-story-theme="dark"]  .story-root,
 .story-root                              { /* dark is default */
   --s-bg:       #0f1a22;
@@ -298,4 +290,28 @@
   .s-reveal { opacity: 1; transform: none; transition: none; }
   .s-scroll-cue svg { animation: none; }
   .s-bar-fill { transition: none; }
+}
+
+/* ── TABS ── */
+.s-tabs-wrap { margin: 2.5rem 0; }
+.s-tabs {
+  display: flex; gap: 0; border-bottom: 1px solid var(--s-rule);
+  margin-bottom: 2rem; overflow-x: auto; scrollbar-width: none;
+}
+.s-tabs::-webkit-scrollbar { display: none; }
+.s-tab {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  padding: 0.75rem 1.25rem; font-size: 0.82rem; font-weight: 500;
+  color: var(--s-dim); cursor: pointer; white-space: nowrap;
+  margin-bottom: -1px; transition: color 0.15s, border-color 0.15s;
+  font-family: inherit;
+}
+.s-tab:hover { color: var(--s-text); }
+.s-tab-active { color: var(--s-amber); border-bottom-color: var(--s-amber); }
+.s-tab-panel { animation: s-fadein 0.25s ease; }
+@keyframes s-fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+.s-caveat {
+  font-size: 0.75rem; color: var(--s-dim);
+  border-left: 2px solid var(--s-rule);
+  padding-left: 0.75rem; margin-top: 1.5rem; font-style: italic;
 }

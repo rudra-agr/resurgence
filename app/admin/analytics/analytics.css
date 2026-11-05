@@ -1,0 +1,30 @@
+/* Admin analytics. Uses the global design tokens; nothing here introduces new colours except chart fills. */
+.an-head { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; }
+.an-stamp { font: 400 0.75rem/1.4 var(--font-mono); color: var(--ink-soft); margin: 0 0 var(--s2); }
+
+.an-kpis { margin-top: var(--s4); padding-inline: 0; }
+
+.an-insights { list-style: none; margin: var(--s5) 0 var(--s5); padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s5); }
+.an-insights li { border-top: 1px solid var(--ink); padding-top: var(--s3); font-size: 0.95rem; }
+.an-insights b { display: block; font: 500 0.72rem/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--s1); }
+
+.an-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2) var(--s6); }
+.an-grid .wide { grid-column: 1 / -1; }
+.an-chart { height: 300px; }
+.an-chart.tall { height: 340px; }
+.an-empty { padding: var(--s5) 0; }
+
+.an-section { margin-top: var(--s6); }
+.an-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--s4); margin: var(--s3) 0 var(--s4); }
+.an-facts dt { font: 500 0.7rem/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.an-facts dd { margin: 0; font-weight: 600; }
+
+.an-grid-wrap { margin-top: var(--s2); }
+.an-grid-wrap .ag-theme-quartz { height: 360px; }
+.ag-theme-quartz .gap-open { color: var(--accent); font-weight: 600; }
+.ag-theme-quartz .gap-closed { color: var(--green); }
+
+@media (max-width: 860px) {
+  .an-grid { grid-template-columns: 1fr; }
+  .an-insights { grid-template-columns: 1fr; gap: var(--s4); }
+}

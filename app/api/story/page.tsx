@@ -1,5 +1,5 @@
 
-export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 import { StoryClient } from './StoryClient';

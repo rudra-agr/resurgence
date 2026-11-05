@@ -1,0 +1,104 @@
+
+.disaster-banner {
+  background: #1a2e1a;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 0.65rem clamp(1rem, 4vw, 2.5rem);
+  position: relative;
+  z-index: 15;
+}
+
+.disaster-banner-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.disaster-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.disaster-banner-pulse {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #6fcf7a;
+  position: relative;
+  flex-shrink: 0;
+}
+.disaster-banner-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: rgba(111,207,122,0.3);
+  animation: banner-pulse 2s ease-in-out infinite;
+}
+@keyframes banner-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50%       { transform: scale(1.6); opacity: 0; }
+}
+
+.disaster-banner-text {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.75);
+  white-space: nowrap;
+}
+.disaster-banner-text strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.disaster-banner-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.disaster-banner-stat {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.disaster-banner-stat strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.disaster-banner-stat span {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.disaster-banner-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6fcf7a;
+  text-decoration: none;
+  white-space: nowrap;
+  margin-left: auto;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid rgba(111,207,122,0.35);
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+.disaster-banner-link:hover {
+  background: rgba(111,207,122,0.1);
+  color: #6fcf7a;
+  text-decoration: none;
+}
+
+@media (max-width: 600px) {
+  .disaster-banner-stats { display: none; }
+  .disaster-banner-link  { margin-left: 0; }
+}
