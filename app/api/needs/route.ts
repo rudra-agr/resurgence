@@ -46,6 +46,7 @@ export async function GET() {
       needTitle: f.need.title,
       amount: f.amount,
       currency: f.currency,
+      status: f.status,
       // SECURITY: same keys as before, masked values (last 4 characters / first initial).
       payer: maskPayer(f.payer),
       paypalOrderId: maskId(f.orderId),

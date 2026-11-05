@@ -83,3 +83,10 @@ export const captureOrder = (orderId: string) =>
   call(`/v2/checkout/orders/${orderId}/capture`, { method: 'POST', requestId: `capture-${orderId}` });
 
 export const getOrder = (orderId: string) => call(`/v2/checkout/orders/${orderId}`, { method: 'GET' });
+
+export const refundCapture = (captureId: string) =>
+  call(`/v2/payments/captures/${captureId}/refund`, {
+    method: 'POST',
+    requestId: `refund-${captureId}`,
+    body: '{}', // empty body = full refund
+  });
