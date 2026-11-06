@@ -80,7 +80,7 @@ export default function DonationsGrid({ donations, money, cur, isAdmin, onChange
       <div className="ag-theme-quartz" style={{ height: 460 }}>
         <AgGridReact<Donation>
           ref={grid}
-          rowData={donations}
+          rowData={donations}suppressMovableColumns
           columnDefs={cols}
           defaultColDef={{ sortable: true }}
           quickFilterText={q}
