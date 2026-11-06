@@ -1,30 +1,85 @@
-/* Admin analytics. Uses the global design tokens; nothing here introduces new colours except chart fills. */
+/* Admin analytics: responsive 12-column card board on the global tokens. */
+.wrap.an-page { max-width: 1440px; padding-bottom: var(--s6); }
+
 .an-head { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; }
-.an-stamp { font: 400 0.75rem/1.4 var(--font-mono); color: var(--ink-soft); margin: 0 0 var(--s2); }
+.an-head .page-title { margin-bottom: var(--s2); }
+.an-tools { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; padding-bottom: var(--s2); }
+.an-chip { font: 500 0.75rem/1 var(--font-mono); padding: 0.45rem 0.7rem; border-radius: 999px; background: var(--amber-bg); border: 1px dashed var(--amber-line); }
+.an-stamp { font: 400 0.75rem/1.4 var(--font-mono); color: var(--ink-soft); }
 
-.an-kpis { margin-top: var(--s4); padding-inline: 0; }
+.an-progress { margin: var(--s2) 0 var(--s4); }
+.an-bar { height: 10px; border-radius: 999px; background: var(--rule); overflow: hidden; }
+.an-bar span { display: block; height: 100%; background: var(--green); border-radius: 999px; min-width: 0; transition: width 0.4s; }
+.an-progress p { margin: var(--s2) 0 0; font-size: 0.85rem; color: var(--ink-soft); }
 
-.an-insights { list-style: none; margin: var(--s5) 0 var(--s5); padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s5); }
-.an-insights li { border-top: 1px solid var(--ink); padding-top: var(--s3); font-size: 0.95rem; }
-.an-insights b { display: block; font: 500 0.72rem/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--s1); }
+/* Board: 12 columns; card width is set with s2..s12 and widens as the screen narrows. */
+.an-board { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s3); align-items: stretch; }
+.s2 { grid-column: span 2; } .s3 { grid-column: span 3; } .s4 { grid-column: span 4; }
+.s5 { grid-column: span 5; } .s6 { grid-column: span 6; } .s7 { grid-column: span 7; } .s12 { grid-column: 1 / -1; }
 
-.an-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2) var(--s6); }
-.an-grid .wide { grid-column: 1 / -1; }
-.an-chart { height: 300px; }
-.an-chart.tall { height: 340px; }
-.an-empty { padding: var(--s5) 0; }
+.an-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: var(--s4); min-width: 0; display: flex; flex-direction: column; }
+.an-card h2 { font-size: 1.1rem; margin: 0 0 2px; }
+.an-sub { margin: 0 0 var(--s3); font-size: 0.82rem; line-height: 1.45; color: var(--ink-soft); }
+.an-after { margin: var(--s2) 0 0; }
+.an-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s3); flex-wrap: wrap; }
 
-.an-section { margin-top: var(--s6); }
-.an-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--s4); margin: var(--s3) 0 var(--s4); }
-.an-facts dt { font: 500 0.7rem/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.an-empty { flex: 1; min-height: 150px; display: flex; align-items: center; justify-content: center; text-align: center; padding: var(--s4); border: 1px dashed var(--rule); border-radius: 8px; font-size: 0.88rem; color: var(--ink-soft); }
+
+.an-take { border-left: 4px solid var(--accent); }
+.an-take b { font: 500 0.7rem/1.5 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.an-take p { margin: 2px 0 0; font-size: 0.98rem; line-height: 1.45; }
+
+.an-kpi { padding: var(--s3) var(--s4); justify-content: space-between; }
+.an-kpi span { font-size: 0.82rem; color: var(--ink-soft); }
+.an-kpi strong { display: block; font: 600 clamp(1.4rem, 2.2vw, 2rem)/1.2 var(--font-display); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.an-kpi.warn strong { color: var(--accent); }
+.an-kpi.good strong { color: var(--green); }
+.an-spark { display: block; width: 100%; height: 28px; margin-top: 4px; }
+.an-spark polyline { fill: none; stroke: var(--green); stroke-width: 2; vector-effect: non-scaling-stroke; }
+
+.an-chart { flex: 1; min-height: 260px; position: relative; }
+.an-chart.tall { min-height: 320px; }
+
+.an-gauge { display: block; width: 100%; max-width: 300px; margin: auto auto 0; }
+.an-gauge .track { stroke: var(--rule); }
+.an-gauge .fill { stroke: var(--green); }
+.an-gauge text { fill: var(--ink); text-anchor: middle; }
+.an-gauge .big { font: 600 24px var(--font-display); }
+.an-gauge .small { font: 400 11px var(--font-body); fill: var(--ink-soft); }
+.an-gauge-note { text-align: center; margin: var(--s2) 0 auto; font-size: 0.85rem; color: var(--ink-soft); }
+
+.an-event { margin-top: var(--s4); }
+.an-event h2 { margin: 0; }
+.an-facts { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); margin: var(--s3) 0 0; }
+.an-facts dt { font: 500 0.68rem/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
 .an-facts dd { margin: 0; font-weight: 600; }
 
-.an-grid-wrap { margin-top: var(--s2); }
-.an-grid-wrap .ag-theme-quartz { height: 360px; }
 .ag-theme-quartz .gap-open { color: var(--accent); font-weight: 600; }
 .ag-theme-quartz .gap-closed { color: var(--green); }
 
-@media (max-width: 860px) {
-  .an-grid { grid-template-columns: 1fr; }
-  .an-insights { grid-template-columns: 1fr; gap: var(--s4); }
+/* Large desktop: a little more room for type. */
+@media (min-width: 1500px) { .an-take p { font-size: 1.05rem; } .an-chart { min-height: 290px; } }
+
+/* Laptop / tablet landscape: gauge and pipeline pair up, the daily chart goes full width below them. */
+@media (max-width: 1200px) {
+  .s2 { grid-column: span 4; }
+  .s3 { grid-column: span 6; }
+  .s6.o-3 { grid-column: 1 / -1; order: 3; }
+  .o-1 { order: 1; } .o-2 { order: 2; }
+  .s4 { grid-column: span 6; }
+  .s4.an-take { grid-column: span 4; }
+  .s7, .s5 { grid-column: 1 / -1; }
+}
+/* Tablet portrait: takeaways stack, everything else is one or two columns. */
+@media (max-width: 800px) {
+  .s4.an-take { grid-column: 1 / -1; }
+  .s4 { grid-column: 1 / -1; }
+  .s3 { grid-column: 1 / -1; }
+  .s2 { grid-column: span 6; }
+  .an-head { align-items: flex-start; }
+}
+@media (max-width: 480px) {
+  .an-card { padding: var(--s3); }
+  .an-chart { min-height: 230px; }
+  .an-tools { gap: var(--s2); }
 }

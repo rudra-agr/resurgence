@@ -20,6 +20,7 @@ export const GET = () =>
       currency: region?.currency ?? "USD",
       totalNeeds: needs.length,
       openNeeds: needs.filter((n) => !FUNDED.includes(n.status)).length,
+      pricedNeeds: needs.filter((n) => n.target > 0).length,
       fundedNeeds: needs.filter((n) => FUNDED.includes(n.status)).length,
       totalFamilies: needs.reduce((a, n) => a + n.families, 0),
       totalRaised: +totalRaised.toFixed(2),
