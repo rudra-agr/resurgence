@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { send } from '@/lib/client';
 import { useLedger } from './Providers';
+import ThemeToggle from './ThemeToggle';
 
 export function SiteNav() {
   const { me, setMe, data, offline } = useLedger();
@@ -51,6 +52,7 @@ export function SiteNav() {
           ) : (
             <Link href="/staff" aria-current={path === '/staff' ? 'page' : undefined}>Staff login</Link>
           )}
+          <ThemeToggle />
         </nav>
       </div>
       {offline && <p className="wrap err" role="alert">Cannot reach the server. Showing the last data received.</p>}

@@ -53,12 +53,12 @@ export default function NeedsGrid({ needs, money }: { needs: NeedRow[]; money: (
       { field: 'urgency', width: 120, cellRenderer: UrgencyCell },
       { field: 'families', width: 95 },
       { field: 'raised', width: 105, valueFormatter: (p) => money(p.value) },
-      { field: 'target', width: 105, valueFormatter: (p) => (p.value ? money(p.value) : '—') },
-      { headerName: 'Funding', width: 190, valueGetter: (p) => (p.data ? stageOf(p.data) : ''), cellRenderer: FundingCell },
+      { field: 'target', width: 105, valueFormatter: (p) => (p.value ? money(p.value) : '-') },
+      { headerName: 'Funding', width: 125, valueGetter: (p) => (p.data ? stageOf(p.data) : ''), cellRenderer: FundingCell },
       {
         headerName: 'Verification',
         flex: 1.3,
-        minWidth: 240,
+        minWidth: 320,
         valueGetter: (p) => (p.data ? (p.data.verified ? `Verified by ${p.data.authority} (mock)` : 'Unverified') : ''),
         cellRenderer: VerifyCell,
       },
@@ -83,14 +83,18 @@ export default function NeedsGrid({ needs, money }: { needs: NeedRow[]; money: (
       <p className="note">Select a row to open its proof trail.</p>
       <div className="ag-theme-quartz" style={{ height: 420 }}>
         <AgGridReact<NeedRow>
-          rowData={rows}
+          rowData={rows}suppressMovableColumns
           columnDefs={cols}
-          defaultColDef={{ sortable: true }}
+          defaultColDef={{ sortable: true, resizable:false }}
           quickFilterText={q}
           getRowId={(p) => p.data.id}
           rowSelection="single"
           onRowClicked={(e) => e.data && router.push(`/needs/${e.data.id}`)}
-        />
+          onCellKeyDown={(e) => {
+          const ev = e.event as KeyboardEvent | null;
+          if (ev?.key === 'Enter' && e.data) router.push(`/needs/${e.data.id}`);
+        }}
+       />
       </div>
     </div>
   );

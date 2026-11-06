@@ -243,17 +243,20 @@ button.needrow:hover:not(:disabled) { background: var(--surface); color: var(--i
 .legend { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin: 0 0 var(--s2); padding: 0; list-style: none; font-size: 0.9rem; }
 
 /* AG Grid theme mapped to tokens */
-.ag-theme-quartz {
+div.ag-theme-quartz, div.ag-theme-quartz-dark {
   width: 100%;
   --ag-font-family: var(--font-body);
   --ag-foreground-color: var(--ink);
   --ag-background-color: var(--surface);
   --ag-header-background-color: var(--paper);
   --ag-header-foreground-color: var(--ink);
+  --ag-secondary-foreground-color: var(--ink-soft);
   --ag-border-color: var(--rule);
   --ag-row-border-color: var(--rule);
-  --ag-row-hover-color: #f0e9da;
-  --ag-selected-row-background-color: #f6dfcf;
+  --ag-header-column-separator-color: var(--rule);
+  --ag-input-border-color: var(--rule);
+  --ag-row-hover-color: color-mix(in srgb, var(--ink) 6%, var(--surface));
+  --ag-selected-row-background-color: color-mix(in srgb, var(--accent) 16%, var(--surface));
   --ag-active-color: var(--accent);
   --ag-wrapper-border-radius: 0;
 }

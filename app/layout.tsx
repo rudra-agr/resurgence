@@ -1,9 +1,12 @@
 import './globals.css';
+import './theme.css';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Fraunces, IBM_Plex_Mono, Public_Sans } from 'next/font/google';
 import { LedgerProvider } from './Providers';
 import { SiteFooter, SiteNav } from './SiteChrome';
+import Assistant from './Assistant';
+import { THEME_SCRIPT } from '@/lib/themeScript';
 
 // Self-hosted by next/font at build time, so the strict CSP (font-src 'self') still holds.
 const display = Fraunces({ subsets: ['latin'], variable: '--f-display', display: 'swap' });
@@ -24,13 +27,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable} ${mono.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>
         <LedgerProvider>
           <a className="skip" href="#main">Skip to content</a>
           <SiteNav />
           <main id="main">{children}</main>
           <SiteFooter />
+          <Assistant />
         </LedgerProvider>
       </body>
     </html>

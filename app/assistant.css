@@ -1,0 +1,20 @@
+.as-launch { position: fixed; right: 1.2rem; bottom: 1.2rem; z-index: 60; border-radius: 999px; padding: 0.7rem 1.2rem; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25); }
+.as-panel { position: fixed; right: 1.2rem; bottom: 1.2rem; z-index: 60; width: min(380px, calc(100vw - 2rem)); height: min(560px, calc(100vh - 6rem)); display: flex; flex-direction: column; background: var(--surface); color: var(--ink); border: 1px solid var(--ink); border-radius: 8px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); }
+.as-head { display: flex; justify-content: space-between; align-items: center; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--rule); font-family: var(--font-display); font-size: 1.1rem; }
+.as-x { padding: 0 0.6rem; line-height: 1.6; font-size: 1.2rem; }
+.as-log { flex: 1; overflow-y: auto; padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
+.as-hint { font-size: 0.88rem; color: var(--ink-soft); margin: 0; }
+.as-chips { display: flex; flex-direction: column; gap: var(--s2); align-items: flex-start; }
+.as-chips button { font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 999px; text-align: left; font-weight: 500; }
+.as-msg { margin: 0; padding: 0.55rem 0.8rem; border-radius: 8px; font-size: 0.92rem; line-height: 1.5; white-space: pre-wrap; max-width: 92%; }
+.as-user { align-self: flex-end; background: var(--ink); color: var(--paper); }
+.as-assistant { align-self: flex-start; background: var(--paper); border: 1px solid var(--rule); }
+.as-typing { color: var(--ink-soft); letter-spacing: 0.2em; }
+.as-form { display: flex; gap: var(--s2); padding: var(--s3) var(--s4) 0; }
+.as-form input { margin: 0; flex: 1; }
+.as-foot { margin: 0; padding: var(--s2) var(--s4) var(--s3); font-size: 0.72rem; color: var(--ink-soft); }
+
+@media (max-width: 520px) {
+  .as-launch { right: 0.8rem; bottom: 0.8rem; padding: 0.6rem 1rem; }
+  .as-panel { right: 0.5rem; bottom: 0.5rem; width: calc(100vw - 1rem); height: calc(100vh - 5rem); }
+}
