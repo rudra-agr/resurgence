@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { captureOrder, getOrder, PayPalError, type PayPalOrder } from '@/lib/paypal';
+import { captureOrder, getOrder, refundCapture, PayPalError, type PayPalCapture, type PayPalOrder } from '@/lib/paypal';
 import { round2 } from '@/lib/products';
 import { assertSameOrigin, requireJson } from '@/lib/csrf';
 import { clientIp, limit, MIN } from '@/lib/rateLimit';
@@ -13,6 +13,42 @@ const DECLINES: Record<string, string> = {
   PAYER_ACTION_REQUIRED: 'PayPal needs you to finish approving the payment.',
   ORDER_NOT_APPROVED: 'The payment was not approved in PayPal.',
 };
+
+// Same bounds as create-order. Enforced again here because the PayPal client ID is public,
+// so someone can create an order directly with PayPal and skip our create-order route.
+const MIN_DONATION = 1;
+const MAX_DONATION = 10_000;
+
+// After money has been captured, any failure must not leave the donor charged with no record.
+// Try to refund in full, and leave an audit event (when we know the need) so an admin can see it.
+async function refundAndLog(needId: string | null, cap: PayPalCapture, reason: string, orderId: string): Promise<boolean> {
+  let refunded = false;
+  try {
+    await refundCapture(cap.id);
+    refunded = true;
+  } catch (e) {
+    console.error('[auto-refund failed]', orderId, cap.id, e instanceof Error ? e.message : e);
+  }
+  console.error('[post-capture failure]', { orderId, captureId: cap.id, reason, refunded });
+  if (needId) {
+    try {
+      await prisma.auditEvent.create({
+        data: {
+          needId,
+          type: 'PAYMENT_FAILED',
+          actor: 'PayPal sandbox',
+          isSimulated: true,
+          message: refunded
+            ? `Payment not recorded (${reason}). Automatically refunded (capture ${cap.id}). Nothing was added to the total`
+            : `Payment captured but NOT recorded (${reason}). Automatic refund failed, admin must refund capture ${cap.id}`,
+        },
+      });
+    } catch (e) {
+      console.error('[audit write failed]', e);
+    }
+  }
+  return refunded;
+}
 
 // SECURITY: public route (donors need no account). Origin-checked and rate limited per IP.
 export async function POST(req: Request) {
@@ -36,18 +72,39 @@ export async function POST(req: Request) {
   // Orders that are already COMPLETED skip this and go through the normal idempotent path below.
   try {
     const pre = await getOrder(orderId);
+    // Already-COMPLETED orders skip this and go through the normal idempotent path below.
     if (pre.status !== 'COMPLETED') {
       const u = pre.purchase_units?.[0];
-      const preNeed = u?.custom_id ? await prisma.need.findUnique({ where: { id: u.custom_id } }) : null;
       const preAmount = Number(u?.amount?.value);
-      if (preNeed && Number.isFinite(preAmount)) {
-        const remaining = round2(preNeed.target - preNeed.raised);
-        if (preNeed.status === 'FUNDED' || preAmount > remaining + 0.005) {
-          return NextResponse.json(
-            { error: 'This need no longer needs that amount. You were not charged.' },
-            { status: 409 }
-          );
-        }
+      const preNeed = u?.custom_id
+        ? await prisma.need.findUnique({ where: { id: u.custom_id }, include: { region: true } })
+        : null;
+
+      // R3: never capture an order that does not resolve to a known need.
+      if (!preNeed) {
+        return NextResponse.json({ error: 'This payment does not belong to a known need. You were not charged.' }, { status: 400 });
+      }
+      if (preNeed.target <= 0) {
+        return NextResponse.json({ error: 'This need cannot take donations yet. You were not charged.' }, { status: 409 });
+      }
+      // R3: currency must match the need's region, as set by our server.
+      if (u?.amount?.currency_code !== preNeed.region.currency) {
+        return NextResponse.json({ error: 'Payment currency does not match this need. You were not charged.' }, { status: 400 });
+      }
+      // R4: same min and max as create-order.
+      if (!Number.isFinite(preAmount) || preAmount < MIN_DONATION || preAmount > MAX_DONATION) {
+        return NextResponse.json(
+          { error: `Donations must be between ${MIN_DONATION} and ${MAX_DONATION}. You were not charged.` },
+          { status: 400 }
+        );
+      }
+      // Overfunding guard (unchanged behaviour).
+      const remaining = round2(preNeed.target - preNeed.raised);
+      if (preNeed.status === 'FUNDED' || preAmount > remaining + 0.005) {
+        return NextResponse.json(
+          { error: 'This need no longer needs that amount. You were not charged.' },
+          { status: 409 }
+        );
       }
     }
   } catch (e) {
@@ -81,7 +138,19 @@ export async function POST(req: Request) {
   if (!needId) needId = (await getOrder(orderId).catch(() => null))?.purchase_units?.[0]?.custom_id;
   const need = needId ? await prisma.need.findUnique({ where: { id: needId }, include: { region: true } }) : null;
 
-  if (!need) return NextResponse.json({ error: 'This payment does not belong to a known need.' }, { status: 400 });
+  if (!need) {
+    // Money may have moved. Refund if the capture completed.
+    if (cap && cap.status === 'COMPLETED') {
+      const refunded = await refundAndLog(null, cap, 'unknown need', orderId);
+      return NextResponse.json(
+        { error: refunded
+            ? 'This payment does not belong to a known need. It was refunded.'
+            : 'This payment does not belong to a known need. Contact the organisers with your order ID: ' + orderId },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json({ error: 'This payment does not belong to a known need.' }, { status: 400 });
+  }
 
   if (order.status !== 'COMPLETED' || !cap || cap.status !== 'COMPLETED') {
     // Failed or pending payments never touch the totals, but they are visible on the timeline.
@@ -99,8 +168,19 @@ export async function POST(req: Request) {
 
   const amount = Number(cap.amount.value);
   const cur = cap.amount.currency_code;
-  if (cur !== need.region.currency || !Number.isFinite(amount) || amount <= 0) {
-    return NextResponse.json({ error: 'Payment currency does not match this need.' }, { status: 400 });
+  if (
+    cur !== need.region.currency ||
+    !Number.isFinite(amount) ||
+    amount < MIN_DONATION ||
+    amount > MAX_DONATION
+  ) {
+    const refunded = await refundAndLog(need.id, cap, 'currency or amount rejected', orderId);
+    return NextResponse.json(
+      { error: refunded
+          ? 'Payment currency or amount is not allowed for this need. It was refunded.'
+          : 'Payment currency or amount is not allowed. Contact the organisers with your order ID: ' + orderId },
+      { status: 400 }
+    );
   }
 
   try {
@@ -158,7 +238,17 @@ export async function POST(req: Request) {
     // Unique constraint hit: another request recorded it first. Count it once.
     if ((e as { code?: string }).code === 'P2002') return NextResponse.json({ ok: true, duplicate: true });
     console.error('[capture record]', e);
-    return NextResponse.json({ error: 'Payment captured but recording failed. Contact the organisers with your order ID: ' + orderId }, { status: 500 });
+    // If it actually got recorded (e.g. the error came after commit), do not refund it.
+    if (await prisma.funding.findUnique({ where: { orderId } }).catch(() => null)) {
+      return NextResponse.json({ ok: true, duplicate: true });
+    }
+    const refunded = await refundAndLog(need.id, cap, 'recording failed', orderId);
+    return NextResponse.json(
+      { error: refunded
+          ? 'We could not record your payment, so it was refunded. Please try again.'
+          : 'Payment captured but recording failed. Contact the organisers with your order ID: ' + orderId },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ ok: true });
