@@ -42,10 +42,18 @@ export function rateLimit(key: string, limit: number, windowMs: number, now = Da
   return { ok: true, retryAfterSec: 0 };
 }
 
-// First value of x-forwarded-for (set by the host's proxy, e.g. Render). Falls back to 'unknown'.
+// SECURITY: client IP for rate limiting.
+// x-forwarded-for is NOT trusted: the client can send its own value and the host only appends to it,
+// so rotating it would give an attacker a fresh bucket on every request.
+// On Render, Cloudflare sits in front and sets these two headers itself (clients cannot forge them).
+// If neither is present (local dev, unexpected proxy) everyone shares one strict 'unknown' bucket.
+const IP_SHAPE = /^[0-9a-fA-F:.]{3,45}$/; // IPv4 or IPv6 characters only, so junk cannot create keys
 export function clientIp(req: { headers: Headers }): string {
-  const first = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  return first || 'unknown';
+  for (const name of ['true-client-ip', 'cf-connecting-ip']) {
+    const v = req.headers.get(name)?.trim();
+    if (v && IP_SHAPE.test(v)) return v;
+  }
+  return 'unknown';
 }
 
 // 429 in the same { error } shape the routes already use.

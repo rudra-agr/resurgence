@@ -18,7 +18,12 @@ test('keys are independent and the window slides', () => {
   assert.equal(rateLimit('a', 5, 1000, t + 1001).ok, true); // window has passed
 });
 
-test('clientIp takes the first x-forwarded-for value, else "unknown"', () => {
-  assert.equal(clientIp({ headers: new Headers({ 'x-forwarded-for': '1.2.3.4, 9.9.9.9' }) }), '1.2.3.4');
+test('clientIp trusts the Cloudflare headers, ignores x-forwarded-for, else "unknown"', () => {
+  assert.equal(clientIp({ headers: new Headers({ 'true-client-ip': '1.2.3.4' }) }), '1.2.3.4');
+  assert.equal(clientIp({ headers: new Headers({ 'cf-connecting-ip': '2001:db8::1' }) }), '2001:db8::1');
+  // a spoofed x-forwarded-for must not create its own bucket
+  assert.equal(clientIp({ headers: new Headers({ 'x-forwarded-for': '6.6.6.6, 9.9.9.9' }) }), 'unknown');
+  // junk in a trusted header is rejected
+  assert.equal(clientIp({ headers: new Headers({ 'true-client-ip': 'not an ip!' }) }), 'unknown');
   assert.equal(clientIp({ headers: new Headers() }), 'unknown');
 });
