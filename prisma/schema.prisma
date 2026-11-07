@@ -59,6 +59,7 @@ model Need {
   items         Item[]
   fundings      Funding[]
   events        AuditEvent[]
+  tasks         DeliveryTask[]
 
   @@index([regionId])
   @@index([status])
@@ -186,4 +187,37 @@ model BuildingDamage {
   source          String
 
   @@index([disasterEventId])
+}
+
+// ---- Operations: delivery scheduling (admin /admin/operations) ----
+// type: VEHICLE | TEAM | WAREHOUSE
+model Resource {
+  id       String         @id @default(cuid())
+  name     String
+  type     String
+  capacity Int            @default(1)
+  region   String?
+  active   Boolean        @default(true)
+  tasks    DeliveryTask[]
+}
+
+// type: PURCHASE | DISPATCH | DELIVERY | VERIFICATION
+// status: SCHEDULED | IN_PROGRESS | DONE
+model DeliveryTask {
+  id         String    @id @default(cuid())
+  title      String
+  type       String
+  status     String    @default("SCHEDULED")
+  startDate  DateTime
+  endDate    DateTime
+  notes      String?
+  createdAt  DateTime  @default(now())
+  needId     String
+  need       Need      @relation(fields: [needId], references: [id], onDelete: Cascade)
+  resourceId String?
+  resource   Resource? @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+
+  @@index([needId])
+  @@index([resourceId])
+  @@index([startDate])
 }

@@ -10,12 +10,15 @@
     "typecheck": "tsc --noEmit",
     "audit": "npm audit --omit=dev --audit-level=high",
     "test": "tsx --test tests/*.test.ts",
-    "seed:disaster": "tsx prisma/seed_disaster.ts"
+    "seed:disaster": "tsx prisma/seed_disaster.ts",
+    "seed:operations": "tsx prisma/seed_operations.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@bryntum/scheduler": "npm:@bryntum/scheduler-trial@7.3.8",
+    "@bryntum/scheduler-react": "7.3.8",
     "@paypal/react-paypal-js": "8.7.0",
     "@prisma/client": "6.19.3",
     "ag-charts-react": "10.3.8",
