@@ -19,6 +19,7 @@ export default function Assistant() {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [suggest, setSuggest] = useState<string[]>([]);
   const log = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
@@ -40,11 +41,17 @@ export default function Assistant() {
     setMsgs(next);
     setText('');
     setErr('');
+    setSuggest([]);
     setBusy(true);
     const { ok, j } = await send('/api/assistant', { messages: next });
     setBusy(false);
     if (!ok) return setErr(j.error || 'Something went wrong. Please try again.');
     setMsgs([...next, { role: 'assistant', content: String(j.reply ?? '') }]);
+    setSuggest(
+      Array.isArray(j.suggestions)
+        ? j.suggestions.filter((s: unknown): s is string => typeof s === 'string').slice(0, 3)
+        : []
+    );
   }
 
   return (
@@ -75,7 +82,14 @@ export default function Assistant() {
             {msgs.map((m, i) => (
               <p key={i} className={`as-msg as-${m.role}`}>{m.content}</p>
             ))}
-            {busy && <p className="as-msg as-assistant as-typing" aria-label="Assistant is typing">…</p>}
+            {busy && <p className="as-msg as-assistant as-typing" aria-label="Assistant is typing">Checking the ledger…</p>}
+            {!busy && suggest.length > 0 && (
+              <div className="as-chips">
+                {suggest.map((s) => (
+                  <button key={s} className="alt" onClick={() => ask(s)}>{s}</button>
+                ))}
+              </div>
+            )}
             {err && <p className="err" role="alert">{err}</p>}
           </div>
 

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { assertSameOrigin, requireJson } from '@/lib/csrf';
 import { clientIp, limit, MIN } from '@/lib/rateLimit';
-import { askAssistant } from '@/lib/assistant';
+import { askAssistant, splitReply } from '@/lib/assistant';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    return NextResponse.json({ reply: await askAssistant(messages) });
+    return NextResponse.json(splitReply(await askAssistant(messages)));
   } catch (e) {
     const status = (e as { status?: number }).status;
     const msg = status === 503 ? 'The assistant is not configured on this server.' : 'The assistant is unavailable right now. Please try again in a moment.';

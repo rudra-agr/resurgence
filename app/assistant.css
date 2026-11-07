@@ -18,3 +18,4 @@
   .as-launch { right: 0.8rem; bottom: 0.8rem; padding: 0.6rem 1rem; }
   .as-panel { right: 0.5rem; bottom: 0.5rem; width: calc(100vw - 1rem); height: calc(100vh - 5rem); }
 }
+.as-typing { letter-spacing: normal; font-style: italic; }
