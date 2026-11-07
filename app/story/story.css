@@ -1,6 +1,7 @@
 
-[data-story-theme="dark"]  .story-root,
-.story-root                              {
+/* resurgence-patch: unified-theme */
+:root[data-theme="dark"] .story-root,
+.story-root {
   --s-bg:       #0f1a22;
   --s-bg2:      #172330;
   --s-bg3:      #1e2d3d;
@@ -23,7 +24,7 @@
   --ag-row-border-color:         rgba(197,216,230,0.08);
 }
 
-[data-story-theme="light"] .story-root {
+:root[data-theme="light"] .story-root {
   --s-bg:       #f4efe6;
   --s-bg2:      #ede6d8;
   --s-bg3:      #e4dccb;
@@ -54,16 +55,6 @@
   position: relative;
 }
 
-.theme-toggle {
-  position: fixed; top: 1.2rem; right: 1.5rem; z-index: 300;
-  background: var(--s-bg2); border: 1px solid var(--s-rule);
-  color: var(--s-mist); border-radius: 2px;
-  width: 2.4rem; height: 2.4rem; font-size: 1.1rem;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s, color 0.15s;
-  padding: 0;
-}
-.theme-toggle:hover { background: var(--s-bg3); color: var(--s-text); }
 
 /* ── HERO ── */
 .s-hero {
@@ -79,7 +70,7 @@
     linear-gradient(190deg, #0a1c2a 0%, #163348 45%, #091620 100%);
   z-index: 0;
 }
-[data-story-theme="light"] .s-hero-river {
+:root[data-theme="light"] .s-hero-river {
   background:
     repeating-linear-gradient(172deg, transparent 0, transparent 38px, rgba(26,80,110,0.05) 38px, rgba(26,80,110,0.05) 39px),
     linear-gradient(190deg, #1a3a50 0%, #2a5570 45%, #102030 100%);
@@ -203,6 +194,16 @@
 }
 
 .s-grid-wrap { margin: 2rem 0; border: 1px solid var(--s-rule); overflow: hidden; }
+.s-grid-scroll { overflow-x: auto; }
+.s-grid-inner { min-width: 680px; }
+/* fixed, tidy tables: no resize handles, no column separators */
+.s-grid-wrap .ag-header-cell-resize { display: none; }
+.s-grid-wrap .ag-header-cell::after,
+.s-grid-wrap .ag-header-group-cell::after { display: none; }
+.s-grid-wrap .ag-header-cell { cursor: default; }
+.s-grid-wrap .ag-header-cell-sortable { cursor: pointer; }
+.s-grid-wrap .ag-cell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s-grid-wrap .ag-header-cell-text { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 .s-grid-label {
   font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
   color: var(--s-dim); text-transform: uppercase;

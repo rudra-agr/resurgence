@@ -14,3 +14,4 @@ npm-debug.log*
 coverage/
 *.pem
 *.key
+*.bak

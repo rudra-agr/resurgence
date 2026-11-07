@@ -1,8 +1,12 @@
 'use client';
 import './story.css';
+/* resurgence-patch: unified-theme */
 
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useThemeMode } from '@/lib/theme';
+import { NPR_PER_USD, usd } from '@/lib/fx';
+/* resurgence-patch: usd-charts */
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ValueFormatterParams } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
@@ -26,17 +30,30 @@ function useReveal() {
   }, []);
 }
 
+// The story page has no toggle of its own: it follows the site-wide one
+// (data-theme on <html>, set by the header button in SiteChrome).
 function useTheme() {
-  const [dark, setDark] = useState(true);
-  const toggle = useCallback(() => setDark((d) => !d), []);
-  useEffect(() => {
-    document.documentElement.setAttribute('data-story-theme', dark ? 'dark' : 'light');
-  }, [dark]);
-  // cleanup on unmount
-  useEffect(() => () => { document.documentElement.removeAttribute('data-story-theme'); }, []);
-  return { dark, toggle };
+  const { mode } = useThemeMode();
+  return { dark: mode === 'dark' };
 }
 
+
+// Chart figures are kept in rupees; they are drawn in USD (NPR_PER_USD in lib/fx.ts)
+// and every label/tooltip shows the rupee amount in brackets.
+const usdMillion = (nprMillion: number) => nprMillion / NPR_PER_USD;
+const FUND = [
+  { name: 'NPR accounts',        billion: 11.14 },
+  { name: 'USD accounts (est.)', billion: 3.3 },
+  { name: 'Released to NDRRMA',  billion: 1 },
+];
+const SECTORS: [string, number][] = [
+  ['Digital giving', 1960], ['Corporate', 195], ['Banking', 137.2],
+  ['Civil society', 14.1], ['Telecom', 10], ['Trade', 6.43], ['Other', 3],
+];
+const axisUsd = (v: number | string) => {
+  const n = Number(v);
+  return n >= 1000 ? `$${n / 1000}B` : n >= 1 ? `$${Number(n.toFixed(1))}M` : `$${Math.round(n * 1000)}K`;
+};
 
 function useCharts(snapshots: Snapshot[], dark: boolean) {
   const inflowRef  = useRef<HTMLCanvasElement>(null);
@@ -71,8 +88,8 @@ function useCharts(snapshots: Snapshot[], dark: boolean) {
           data: {
             labels: snapshots.map((s) => `Day ${s.daysAfterEvent}`),
             datasets: [{
-              label: 'Cumulative (रू Billion)',
-              data: snapshots.map((s) => s.nprBillion),
+              label: 'Cumulative (USD million)',
+              data: snapshots.map((s) => usdMillion(s.nprBillion * 1000)),
               borderColor: amber, backgroundColor: 'rgba(232,160,32,0.08)',
               fill: true, tension: 0.4, pointBackgroundColor: amber,
               pointRadius: 4, borderWidth: 2,
@@ -80,10 +97,13 @@ function useCharts(snapshots: Snapshot[], dark: boolean) {
           },
           options: {
             responsive: true,
-            plugins: { legend: { display: false } },
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (c) => ` ${money(snapshots[c.dataIndex].nprBillion * 1000)}` } },
+            },
             scales: {
               x: { grid: { color: grid }, ticks: { font: { size: 11 } } },
-              y: { grid: { color: grid }, ticks: { callback: (v) => `रू ${v}B`, font: { size: 11 } } },
+              y: { grid: { color: grid }, ticks: { callback: (v) => axisUsd(v), font: { size: 11 } } },
             },
           },
         });
@@ -94,9 +114,9 @@ function useCharts(snapshots: Snapshot[], dark: boolean) {
         donutInst.current = new Chart(donutRef.current, {
           type: 'doughnut',
           data: {
-            labels: ['NPR accounts (रू 11.14B)', 'USD accounts (~रू 3.3B)', 'Released to NDRRMA (रू 1B)'],
+            labels: FUND.map((f) => `${f.name} — ${money(f.billion * 1000)}`),
             datasets: [{
-              data: [11.14, 3.3, 1],
+              data: FUND.map((f) => usdMillion(f.billion * 1000)),
               backgroundColor: ['rgba(232,160,32,0.75)', mistLo, 'rgba(212,132,90,0.6)'],
               borderColor: [amber, 'transparent', warm],
               borderWidth: 1,
@@ -109,6 +129,7 @@ function useCharts(snapshots: Snapshot[], dark: boolean) {
                 position: 'bottom',
                 labels: { font: { size: 10 }, padding: 12, boxWidth: 10 },
               },
+              tooltip: { callbacks: { label: (c) => ` ${money(FUND[c.dataIndex].billion * 1000)}` } },
             },
           },
         });
@@ -118,10 +139,10 @@ function useCharts(snapshots: Snapshot[], dark: boolean) {
         sectorInst.current = new Chart(sectorRef.current, {
           type: 'bar',
           data: {
-            labels: ['Digital giving', 'Corporate', 'Banking', 'Civil society', 'Telecom', 'Trade', 'Other'],
+            labels: SECTORS.map(([name]) => name),
             datasets: [{
-              label: 'NPR Million',
-              data: [1960, 195, 137.2, 14.1, 10, 6.43, 3],
+              label: 'USD million',
+              data: SECTORS.map(([, m]) => usdMillion(m)),
               backgroundColor: [
                 'rgba(232,160,32,0.75)', 'rgba(212,132,90,0.6)',
                 'rgba(197,216,230,0.3)', 'rgba(197,216,230,0.2)',
@@ -132,11 +153,14 @@ function useCharts(snapshots: Snapshot[], dark: boolean) {
           },
           options: {
             responsive: true, indexAxis: 'y' as const,
-            plugins: { legend: { display: false } },
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (c) => ` ${money(SECTORS[c.dataIndex][1])}` } },
+            },
             scales: {
               x: {
                 grid: { color: grid },
-                ticks: { callback: (v) => (Number(v) >= 1000 ? `${Number(v)/1000}B` : `${v}M`), font: { size: 10 } },
+                ticks: { callback: (v) => axisUsd(v), font: { size: 10 } },
               },
               y: { grid: { display: false }, ticks: { font: { size: 10 }, color: text } },
             },
@@ -149,42 +173,53 @@ function useCharts(snapshots: Snapshot[], dark: boolean) {
   return { inflowRef, donutRef, sectorRef };
 }
 
-const tagRenderer = (color: string, bg: string) => {
-  return (p: { value: string }) => {
-    return p.value ?? '';
-  };
-};
+// ── Money: dollar first, rupee in brackets ──────────────────────────────
+// Every figure is stored in NPR millions; usd() in lib/fx.ts converts at one
+// shared rate (NPR_PER_USD), so changing it there updates the whole page.
+const trim2 = (n: number) => String(Number(n.toFixed(2)));
+const nprText = (million: number) =>
+  million >= 1000 ? `रू ${trim2(million / 1000)} Arba` : `रू ${trim2(million)} Million`;
+const money = (million: number | null | undefined) =>
+  million == null ? '—' : `${usd(million * 1e6)} (${nprText(million)})`;
+
+// Colours are theme variables, so they follow the light/dark switch.
+const amountStyle = { color: 'var(--s-amber)', fontWeight: '500', fontVariantNumeric: 'tabular-nums' };
 
 const intlCols: ColDef[] = [
-  { field: 'contributor', headerName: 'Contributor / Organization', flex: 2, sortable: true, filter: true },
-  { field: 'type',        headerName: 'Type',    flex: 1, sortable: true, filter: true,
-    cellRenderer: tagRenderer('#e8a020', 'rgba(232,160,32,0.12)') },
-  { field: 'amountLabel', headerName: 'Amount',  flex: 1,
-    cellStyle: { fontWeight: '500' } },
-  { field: 'nprArba',     headerName: 'रू Arba (est.)', flex: 1, sortable: true,
-    valueFormatter: (p: ValueFormatterParams) => p.value ? `रू ${p.value}` : '—',
-    cellStyle: { color: '#e8a020', fontVariantNumeric: 'tabular-nums' } },
+  { field: 'contributor', headerName: 'Contributor / Organization', flex: 2, minWidth: 230 },
+  { field: 'type',        headerName: 'Type', flex: 1, minWidth: 120 },
+  { field: 'nprMillion',  headerName: 'Amount — USD (रू)', flex: 1.6, minWidth: 210,
+    valueFormatter: (p: ValueFormatterParams) => money(p.value),
+    cellStyle: amountStyle },
+  { field: 'amountLabel', headerName: 'As pledged', flex: 1.2, minWidth: 160,
+    cellStyle: { color: 'var(--s-dim)', fontSize: '0.82rem' } },
 ];
 
 const natCols: ColDef[] = [
-  { field: 'contributor', headerName: 'Contributor', flex: 2, sortable: true, filter: true },
-  { field: 'type',        headerName: 'Sector',      flex: 1, sortable: true, filter: true,
-    cellStyle: { fontSize: '0.8rem' } },
-  { field: 'amountLabel', headerName: 'Amount',      flex: 1,
-    cellStyle: { fontWeight: '500' } },
-  { field: 'nprMillion',  headerName: 'NPR (Million)', flex: 1, sortable: true,
-    valueFormatter: (p: ValueFormatterParams) => `रू ${p.value}M`,
-    cellStyle: { color: '#e8a020', fontVariantNumeric: 'tabular-nums' } },
-  { field: 'notes',       headerName: 'Notes',       flex: 1,
-    cellStyle: { fontSize: '0.78rem', color: '#6e8fa3' },
+  { field: 'contributor', headerName: 'Contributor', flex: 2, minWidth: 230 },
+  { field: 'type',        headerName: 'Sector', flex: 1, minWidth: 120 },
+  { field: 'nprMillion',  headerName: 'Amount — USD (रू)', flex: 1.6, minWidth: 210,
+    valueFormatter: (p: ValueFormatterParams) => money(p.value),
+    cellStyle: amountStyle },
+  { field: 'notes',       headerName: 'Notes', flex: 1.6, minWidth: 200, sortable: false,
+    cellStyle: { color: 'var(--s-dim)', fontSize: '0.8rem' },
     valueFormatter: (p: ValueFormatterParams) => p.value ?? '' },
 ];
+
+// One shared, locked-down configuration for both tables.
+const defaultColDef: ColDef = {
+  sortable: true,
+  resizable: false,
+  suppressMovable: true,
+  filter: false,
+  suppressHeaderMenuButton: true,
+};
 
 export function StoryClient({ contributions, snapshots }: {
   contributions: Contribution[];
   snapshots: Snapshot[];
 }) {
-  const { dark, toggle } = useTheme();
+  const { dark } = useTheme();
   useReveal();
 
   const intlData = contributions.filter((c) => c.scope === 'international');
@@ -208,16 +243,7 @@ export function StoryClient({ contributions, snapshots }: {
   const gridTheme = dark ? 'ag-theme-quartz-dark' : 'ag-theme-quartz';
 
   return (
-    <div className="story-root" data-dark={dark ? '' : undefined}>
-      {/* ── THEME TOGGLE ── */}
-      <button
-        className="theme-toggle"
-        onClick={toggle}
-        aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-        title={dark ? 'Light mode' : 'Dark mode'}
-      >
-        {dark ? '☀︎' : '☽'}
-      </button>
+    <div className="story-root">
 
       {/* ── HERO ── */}
       <section className="s-hero">
@@ -337,52 +363,62 @@ export function StoryClient({ contributions, snapshots }: {
           <h2>The world gave. Fast. Generously.<br />And then it waited.</h2>
           <p>
             Within 36 hours of the government&apos;s appeal,{' '}
-            <strong>रू 1.91 Billion</strong> had been deposited.
-            Within two weeks, the total exceeded <strong>रू 11.95 Billion</strong>.
+            <strong>$12.6M (रू 1.91 Billion)</strong> had been deposited.
+            Within two weeks, the total exceeded <strong>$78.6M (रू 11.95 Billion)</strong>.
             International pledges pushed the tracked total above{' '}
-            <strong>रू 14 Arba</strong> — roughly <strong>USD 66 million</strong>.
+            <strong>USD 66 million (रू 14 Arba)</strong>.
           </p>
 
           {/* Inflow chart */}
           <div className="s-chart-full s-reveal">
-            <p className="s-chart-label">Contribution inflow — first 30 days (रू Billion)</p>
+            <p className="s-chart-label">Contribution inflow — first 30 days (USD, रू in tooltip)</p>
             <canvas ref={inflowRef} height={180} />
           </div>
 
           {/* AG Grid — international */}
           <div className="s-grid-wrap s-reveal">
             <p className="s-grid-label">International contributions &amp; pledges</p>
-            <div className={gridTheme} style={{ height: 300 }}>
-              <AgGridReact
-                columnDefs={intlCols}
-                rowData={intlData}
-                defaultColDef={{ resizable: true }}
-                suppressCellFocus
-              />
+            <div className="s-grid-scroll">
+              <div className={`${gridTheme} s-grid-inner`}>
+                <AgGridReact
+                  columnDefs={intlCols}
+                  rowData={intlData}
+                  defaultColDef={defaultColDef}
+                  domLayout="autoHeight"
+                  suppressMovableColumns
+                  suppressDragLeaveHidesColumns
+                  suppressCellFocus
+                />
+              </div>
             </div>
           </div>
 
           {/* AG Grid — national */}
           <div className="s-grid-wrap s-reveal">
             <p className="s-grid-label">National &amp; corporate contributions</p>
-            <div className={gridTheme} style={{ height: 380 }}>
-              <AgGridReact
-                columnDefs={natCols}
-                rowData={natData}
-                defaultColDef={{ resizable: true }}
-                suppressCellFocus
-              />
+            <div className="s-grid-scroll">
+              <div className={`${gridTheme} s-grid-inner`}>
+                <AgGridReact
+                  columnDefs={natCols}
+                  rowData={natData}
+                  defaultColDef={defaultColDef}
+                  domLayout="autoHeight"
+                  suppressMovableColumns
+                  suppressDragLeaveHidesColumns
+                  suppressCellFocus
+                />
+              </div>
             </div>
           </div>
 
           {/* Charts row */}
           <div className="s-charts-grid s-reveal">
             <div className="s-chart-card">
-              <p className="s-chart-label">Fund breakdown (रू Arba)</p>
+              <p className="s-chart-label">Fund breakdown (USD, रू in brackets)</p>
               <canvas ref={donutRef} height={200} />
             </div>
             <div className="s-chart-card">
-              <p className="s-chart-label">Sector contributions (NPR Million)</p>
+              <p className="s-chart-label">Sector contributions (USD, रू in tooltip)</p>
               <canvas ref={sectorRef} height={200} />
             </div>
           </div>
@@ -390,14 +426,14 @@ export function StoryClient({ contributions, snapshots }: {
           {/* Fund release bar */}
           <div className="s-bar-wrap s-reveal">
             <div className="s-bar-row">
-              <span>Total collected <strong>रू 14+ Arba (~USD 66M)</strong></span>
-              <span>Released <strong>रू 1 Arba</strong></span>
+              <span>Total collected <strong>~USD 66M (रू 14+ Arba)</strong></span>
+              <span>Released <strong>$6.6M (रू 1 Arba)</strong></span>
             </div>
             <div className="s-bar-track">
               <div className="s-bar-fill" ref={barRef} style={{ width: 0 }} />
             </div>
             <p className="s-bar-note">
-              रू 1 Billion released to NDRRMA out of रू 14+ Arba collected.
+              $6.6M (रू 1 Billion) released to NDRRMA out of ~$66M (रू 14+ Arba) collected.
               The remainder sits across nine commercial bank accounts.
             </p>
           </div>
@@ -410,8 +446,8 @@ export function StoryClient({ contributions, snapshots }: {
           <p className="s-label">The gap</p>
           <h2>Billions collected.<br />Families still waiting.</h2>
           <p>
-            As of late 2026, <strong>रू 11.14 Billion</strong> sits in nine
-            commercial bank accounts. A further <strong>USD 24.47 Million</strong>
+            As of late 2026, <strong>$73.3M (रू 11.14 Billion)</strong> sits in nine
+            commercial bank accounts. A further <strong>USD 24.47 Million (रू 3.72 Arba)</strong>
             is held in foreign currency accounts at Himalayan Bank and Laxmi Sunrise Bank.
             The funds are real. The need is real. The distance between them is bureaucracy.
           </p>
