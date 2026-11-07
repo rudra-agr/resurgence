@@ -1,0 +1,52 @@
+/* Admin operations: delivery scheduler on the global tokens. The Bryntum board itself stays light. */
+.wrap.op-page { max-width: 1440px; padding-bottom: var(--s6); }
+
+.op-head { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; }
+.op-head .page-title { margin-bottom: var(--s2); }
+.op-lede { max-width: 62ch; margin: 0 0 var(--s3); color: var(--ink-soft); }
+.op-chip { font: 500 0.75rem/1 var(--font-mono); padding: 0.45rem 0.7rem; border-radius: 999px; background: var(--amber-bg); border: 1px dashed var(--amber-line); color: #14202b; margin-bottom: var(--s3); }
+
+.op-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s3); margin: var(--s3) 0; }
+.op-kpis div { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: var(--s3) var(--s4); }
+.op-kpis span { display: block; font-size: 0.82rem; color: var(--ink-soft); }
+.op-kpis strong { font: 600 1.7rem/1.2 var(--font-display); font-variant-numeric: tabular-nums; }
+.op-kpis .warn strong { color: var(--accent); }
+
+.op-toolbar { display: flex; align-items: center; gap: var(--s3) var(--s5); flex-wrap: wrap; margin-bottom: var(--s2); }
+.op-weeknav { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.op-range { font: 500 0.9rem/1 var(--font-mono); padding: 0 var(--s3); }
+.op-inline { display: inline-flex; align-items: center; gap: var(--s2); margin: 0; font-weight: 500; }
+.op-inline input, .op-inline select { width: auto; margin: 0; }
+.op-legend { display: flex; gap: var(--s4); list-style: none; margin: 0; padding: 0; font-size: 0.85rem; flex-wrap: wrap; }
+.op-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.op-legend i, .op-list i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 6px; }
+
+.op-msg { min-height: 1.5rem; margin: 0 0 var(--s2); font-size: 0.92rem; }
+.op-ok { color: var(--green); font-weight: 500; }
+
+.op-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--s4); align-items: start; }
+.op-board { min-width: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: var(--s3); }
+.op-board .b-widget { font-family: var(--font-body); }
+.op-hint { margin: var(--s2) 0 0; font-size: 0.82rem; color: var(--ink-soft); }
+.op-empty { margin: var(--s3) 0; padding: var(--s4); border: 1px dashed var(--rule); border-radius: 8px; text-align: center; color: var(--ink-soft); font-size: 0.9rem; }
+
+.op-side { display: flex; flex-direction: column; gap: var(--s3); min-width: 0; }
+.op-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: var(--s4); }
+.op-card h2 { font-size: 1.1rem; margin: 0 0 var(--s2); overflow-wrap: anywhere; }
+.op-card select, .op-card input, .op-card textarea { width: 100%; }
+.op-card button[type='submit'], .op-card > button { margin-top: var(--s3); }
+.op-sub { margin: var(--s2) 0 0; font-size: 0.82rem; line-height: 1.45; color: var(--ink-soft); }
+.op-warn { color: var(--accent); }
+.op-danger { margin-left: var(--s2); }
+
+.op-facts { margin: 0 0 var(--s3); display: grid; gap: var(--s2); }
+.op-facts dt { font: 500 0.68rem/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.op-facts dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+
+.op-list { list-style: none; margin: var(--s3) 0 0; padding: 0; display: grid; gap: var(--s2); }
+.op-list li { display: flex; justify-content: space-between; align-items: center; gap: var(--s2); font-size: 0.88rem; }
+.op-list select { width: auto; max-width: 150px; }
+
+.op-tip { font-size: 0.85rem; line-height: 1.45; }
+
+@media (max-width: 1100px) { .op-grid { grid-template-columns: minmax(0, 1fr); } .op-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
