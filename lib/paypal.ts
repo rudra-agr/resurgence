@@ -90,3 +90,38 @@ export const refundCapture = (captureId: string) =>
     requestId: `refund-${captureId}`,
     body: '{}', // empty body = full refund
   });
+
+// Asks PayPal itself whether a webhook really came from PayPal (signature check).
+// Returns true only for SUCCESS. Throws if the verify call itself fails, so the caller can ask for a retry.
+export async function verifyWebhookSignature(headers: Headers, rawBody: string): Promise<boolean> {
+  const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+  if (!webhookId) return false;
+  const algo = headers.get('paypal-auth-algo');
+  const certUrl = headers.get('paypal-cert-url');
+  const id = headers.get('paypal-transmission-id');
+  const sig = headers.get('paypal-transmission-sig');
+  const time = headers.get('paypal-transmission-time');
+  if (!algo || !certUrl || !id || !sig || !time) return false;
+  let event: unknown;
+  try {
+    event = JSON.parse(rawBody);
+  } catch {
+    return false;
+  }
+  const r = await fetch(`${BASE}/v1/notifications/verify-webhook-signature`, {
+    method: 'POST',
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+    headers: { Authorization: `Bearer ${await token()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      auth_algo: algo,
+      cert_url: certUrl,
+      transmission_id: id,
+      transmission_sig: sig,
+      transmission_time: time,
+      webhook_id: webhookId,
+      webhook_event: event,
+    }),
+  });
+  if (!r.ok) throw new PayPalError(`PayPal webhook verification failed (${r.status})`, r.status);
+  return ((await r.json()) as { verification_status?: string }).verification_status === 'SUCCESS';
+}
