@@ -18,7 +18,8 @@ export default function StaffPage() {
     setLogin({ email: '', password: '' });
     const r = await send('/api/auth/me', undefined, 'GET');
     setMe(r.j.user ?? null);
-    router.push('/');
+    const role = r.j.user?.role;
+    router.push(role === 'COORDINATOR' ? '/coordinator' : role === 'ADMIN' ? '/admin/analytics' : '/');
   }
 
   return (

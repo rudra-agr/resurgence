@@ -12,6 +12,8 @@ export const LABEL: Record<string, string> = {
   PAYMENT_FAILED: 'Payment not completed',
   PURCHASED: 'Purchased',
   DELIVERED: 'Delivered',
+  SITUATION_UPDATE: 'Situation update',
+  COORDINATOR_READY: 'Ready for dispatch',
 };
 
 export const slug = (v: string) => v.toLowerCase().replace(/\s+/g, '-');

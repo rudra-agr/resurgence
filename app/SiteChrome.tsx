@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { send } from '@/lib/client';
 import { useLedger } from './Providers';
 import ThemeToggle from './ThemeToggle';
+import './nav-extra.css';
 
 export function SiteNav() {
   const { me, setMe, data, offline } = useLedger();
@@ -25,9 +26,16 @@ export function SiteNav() {
     ['/donations', 'Donations ledger'],
     ['/#how', 'How it works'],
     ['/story', 'Our story'],
-    ...(me?.coordinatorId ? ([['/post', 'Post a need']] as [string, string][]) : []),
-    ...(me?.role === 'ADMIN' ? ([['/admin/analytics', 'Analytics'], ['/admin/operations', 'Operations']] as [string, string][]) : []),
   ];
+  // Signed in: only that role's links. Signed out: the public links above.
+  // Admin keeps Needs and Donations ledger because purchase/delivery evidence and refunds are done there.
+  const staffLinks: [string, string][] =
+    me?.role === 'ADMIN'
+      ? [['/admin/analytics', 'Analytics'], ['/admin/operations', 'Operations'], ['/needs', 'Needs'], ['/donations', 'Donations ledger']]
+      : me?.role === 'COORDINATOR'
+        ? [['/coordinator', 'My dashboard'], ...(me.coordinatorId ? ([['/post', 'Post a need']] as [string, string][]) : []), ['/needs', 'Needs']]
+        : [];
+  const shown = me ? staffLinks : links;
   const on = (href: string) => (href.startsWith('/#') ? false : path === href || path.startsWith(href + '/'));
 
   return (
@@ -44,11 +52,14 @@ export function SiteNav() {
           Menu
         </button>
         <nav id="site-links" className={open ? 'links open' : 'links'} aria-label="Main">
-          {links.map(([href, label]) => (
+          {shown.map(([href, label]) => (
             <Link key={href} href={href} aria-current={on(href) ? 'page' : undefined}>{label}</Link>
           ))}
           {me ? (
-            <button className="linkbtn" onClick={logout}>Log out ({me.name})</button>
+            <span className="who">
+              <span className="role-chip">{me.role}</span>
+              <button className="linkbtn" onClick={logout}>Log out ({me.name})</button>
+            </span>
           ) : (
             <Link href="/staff" aria-current={path === '/staff' ? 'page' : undefined}>Staff login</Link>
           )}

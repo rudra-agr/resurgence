@@ -1,0 +1,6 @@
+/* Role chip and grouped staff links in the site nav. Imported by SiteChrome.tsx. */
+.links a { white-space: nowrap; }
+.links .nav-group { display: inline-flex; align-items: center; gap: var(--s5); padding-left: var(--s4); border-left: 1px solid var(--rule); }
+.links .role-chip { font: 600 0.62rem/1 var(--font-mono); letter-spacing: 0.1em; padding: 0.3rem 0.5rem; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink-soft); }
+.links .who { display: inline-flex; align-items: center; gap: var(--s2); }
+@media (max-width: 900px) { .links .nav-group { flex-direction: column; align-items: flex-start; gap: var(--s3); padding-left: 0; border-left: 0; } }
