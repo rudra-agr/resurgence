@@ -12,29 +12,63 @@
 .op-kpis strong { font: 600 1.7rem/1.2 var(--font-display); font-variant-numeric: tabular-nums; }
 .op-kpis .warn strong { color: var(--accent); }
 
-.op-toolbar { display: flex; align-items: center; gap: var(--s3) var(--s5); flex-wrap: wrap; margin-bottom: var(--s2); }
-.op-weeknav { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
-.op-range { font: 500 0.9rem/1 var(--font-mono); padding: 0 var(--s3); }
-.op-inline { display: inline-flex; align-items: center; gap: var(--s2); margin: 0; font-weight: 500; }
+/* One tidy control bar: time controls on the left, view and filters after, legend at the end. */
+.op-toolbar { display: flex; align-items: center; gap: var(--s3) var(--s4); flex-wrap: wrap; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: var(--s3) var(--s4); margin-bottom: var(--s2); }
+.op-nav { display: flex; align-items: center; gap: var(--s2); }
+.op-range { font: 500 0.88rem/1 var(--font-mono); padding: 0 var(--s3); min-width: 9.5rem; }
+.op-seg { display: inline-flex; }
+.op-seg button { border-radius: 0; margin: 0; }
+.op-seg button:first-child { border-radius: 8px 0 0 8px; }
+.op-seg button:last-child { border-radius: 0 8px 8px 0; margin-left: -1px; }
+.op-seg button[aria-pressed='true'] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.op-inline { display: inline-flex; align-items: center; gap: var(--s2); margin: 0; font-weight: 500; font-size: 0.88rem; }
 .op-inline input, .op-inline select { width: auto; margin: 0; }
-.op-legend { display: flex; gap: var(--s4); list-style: none; margin: 0; padding: 0; font-size: 0.85rem; flex-wrap: wrap; }
+.op-legend { display: flex; gap: var(--s4); list-style: none; margin: 0 0 0 auto; padding: 0; font-size: 0.85rem; flex-wrap: wrap; }
 .op-legend li { display: inline-flex; align-items: center; gap: 6px; }
-.op-legend i, .op-list i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 6px; }
+.op-legend i, .op-list i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 6px; border: 1px solid rgba(20, 32, 43, 0.45); }
 
 .op-msg { min-height: 1.5rem; margin: 0 0 var(--s2); font-size: 0.92rem; }
 .op-ok { color: var(--green); font-weight: 500; }
 
-.op-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--s4); align-items: start; }
+.op-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--s4); align-items: start; }
+.op-main { display: grid; gap: var(--s4); min-width: 0; }
 .op-board { min-width: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: var(--s3); }
 .op-board .b-widget { font-family: var(--font-body); }
 .op-hint { margin: var(--s2) 0 0; font-size: 0.82rem; color: var(--ink-soft); }
 .op-empty { margin: var(--s3) 0; padding: var(--s4); border: 1px dashed var(--rule); border-radius: 8px; text-align: center; color: var(--ink-soft); font-size: 0.9rem; }
 
+/* ---- Bryntum board: stronger lines, solid bars, dark readable text ----
+   Each bar carries op-<type> and op-<status> classes (see OperationsClient.tsx). Both selector shapes
+   are listed because Bryntum may put a custom class on the event or on its wrapper. */
+.op-board .b-grid-cell,
+.op-board .b-grid-header,
+.op-board .b-sch-header-timeaxis-cell,
+.op-board .b-sch-timeaxis-cell { border-color: #b9b1a1 !important; }
+.op-board .b-sch-header-timeaxis-cell { font-weight: 600; color: #14202b; }
+.op-board .b-grid-header-text { font-weight: 600; color: #14202b; }
+
+.op-board .b-sch-event { color: #14202b !important; font-weight: 600; border: 1px solid rgba(20, 32, 43, 0.55) !important; border-radius: 6px; min-width: 6px; }
+.op-board .b-sch-event .b-sch-event-content { color: #14202b !important; }
+
+.op-board .op-purchase.b-sch-event, .op-board .op-purchase .b-sch-event { background: #e8a020 !important; }
+.op-board .op-dispatch.b-sch-event, .op-board .op-dispatch .b-sch-event { background: #6e8fa3 !important; }
+.op-board .op-delivery.b-sch-event, .op-board .op-delivery .b-sch-event { background: #6fcf7a !important; }
+.op-board .op-verification.b-sch-event, .op-board .op-verification .b-sch-event { background: #d4845a !important; }
+
+/* Status: in progress gets a heavy outline; done stays solid but a little muted (still readable). */
+.op-board .op-progress.b-sch-event, .op-board .op-progress .b-sch-event { border: 2px solid #14202b !important; }
+.op-board .op-done.b-sch-event, .op-board .op-done .b-sch-event { filter: saturate(0.6); border-style: dashed !important; }
+
 .op-side { display: flex; flex-direction: column; gap: var(--s3); min-width: 0; }
 .op-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: var(--s4); }
 .op-card h2 { font-size: 1.1rem; margin: 0 0 var(--s2); overflow-wrap: anywhere; }
+.op-card-head { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s3); }
+.op-card-head h2 { margin: 0; }
+.op-tools { display: flex; gap: var(--s2); align-items: center; }
+.op-tools input { width: 14rem; margin: 0; }
 .op-card select, .op-card input, .op-card textarea { width: 100%; }
 .op-card button[type='submit'], .op-card > button { margin-top: var(--s3); }
+.op-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
 .op-sub { margin: var(--s2) 0 0; font-size: 0.82rem; line-height: 1.45; color: var(--ink-soft); }
 .op-warn { color: var(--accent); }
 .op-danger { margin-left: var(--s2); }
@@ -45,8 +79,8 @@
 
 .op-list { list-style: none; margin: var(--s3) 0 0; padding: 0; display: grid; gap: var(--s2); }
 .op-list li { display: flex; justify-content: space-between; align-items: center; gap: var(--s2); font-size: 0.88rem; }
-.op-list select { width: auto; max-width: 150px; }
+.op-list select { width: auto; max-width: 180px; }
 
 .op-tip { font-size: 0.85rem; line-height: 1.45; }
 
-@media (max-width: 1100px) { .op-grid { grid-template-columns: minmax(0, 1fr); } .op-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .op-grid { grid-template-columns: minmax(0, 1fr); } .op-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .op-legend { margin-left: 0; } }
