@@ -5,9 +5,13 @@ import '@bryntum/scheduler/fontawesome/css/fontawesome.css';
 import '@bryntum/scheduler/fontawesome/css/solid.css';
 import '@bryntum/scheduler/scheduler.css';
 import '@bryntum/scheduler/svalbard-light.css';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-quartz.css';
 import './operations.css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BryntumScheduler } from '@bryntum/scheduler-react';
+import { AgGridReact } from 'ag-grid-react';
+import type { ColDef } from 'ag-grid-community';
 import { useLedger } from '@/app/Providers';
 import { send } from '@/lib/client';
 import { LABEL } from '@/lib/ledger';
@@ -25,16 +29,22 @@ import {
 const pad = (n: number) => String(n).padStart(2, '0');
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const toLocalInput = (d: Date) => `${ymd(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const startOfToday = () => {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+};
 const addDays = (d: Date, n: number) => {
   const x = new Date(d);
   x.setDate(x.getDate() + n);
   return x;
 };
-const mondayOf = (d: Date) => addDays(new Date(d.getFullYear(), d.getMonth(), d.getDate()), -((d.getDay() + 6) % 7));
+// Weeks start on Sunday: this matches Bryntum's week headers and the Nepali working week.
+const weekStartOf = (d: Date) => addDays(new Date(d.getFullYear(), d.getMonth(), d.getDate()), -d.getDay());
 const fmtRange = (a: Date, b: Date) => {
   const f = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short' });
   return `${f.format(a)} to ${f.format(addDays(b, -1))}`;
 };
+const fmtDay = (d: Date) => new Intl.DateTimeFormat('en', { weekday: 'short', day: 'numeric', month: 'short' }).format(d);
 const fmtWhen = (iso: string) =>
   new Intl.DateTimeFormat('en', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(
     new Date(iso)
@@ -44,12 +54,14 @@ const esc = (s: string) =>
 
 const STATUS_LABEL: Record<string, string> = { SCHEDULED: 'Scheduled', IN_PROGRESS: 'In progress', DONE: 'Done' };
 const STATUS_MARK: Record<string, string> = { SCHEDULED: '', IN_PROGRESS: '▶ ', DONE: '✓ ' };
+const STATUS_CLS: Record<string, string> = { SCHEDULED: 'op-scheduled', IN_PROGRESS: 'op-progress', DONE: 'op-done' };
 const EVIDENCE_TYPES: TaskType[] = ['PURCHASE', 'DELIVERY'];
 const COLUMNS = [
-  { text: 'Resource', field: 'name', width: 200 },
-  { text: 'Type', field: 'type', width: 110 },
+  { text: 'Resource', field: 'name', width: 190 },
+  { text: 'Type', field: 'type', width: 100 },
 ];
 
+type View = 'week' | 'day';
 type Msg = { kind: 'ok' | 'err'; text: string } | null;
 
 export default function OperationsClient() {
@@ -60,10 +72,13 @@ export default function OperationsClient() {
   const [version, setVersion] = useState(0); // bumped only when the board must be rebuilt from the server
   const [msg, setMsg] = useState<Msg>(null);
   const [busy, setBusy] = useState(false);
-  const [weekStart, setWeekStart] = useState<Date>(() => mondayOf(new Date()));
+  const [view, setView] = useState<View>('week');
+  const [anchor, setAnchor] = useState<Date>(() => startOfToday());
   const [filter, setFilter] = useState<'ALL' | (typeof RESOURCE_TYPES)[number]>('ALL');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  const [q, setQ] = useState('');
+  const taskGrid = useRef<AgGridReact<TaskRow>>(null);
 
   // Create-form state
   const [needId, setNeedId] = useState('');
@@ -96,16 +111,19 @@ export default function OperationsClient() {
     load();
   }, [load]);
 
-  const weekEnd = useMemo(() => addDays(weekStart, 7), [weekStart]);
+  // The visible time range. Stable Date objects so the board is not told to move on every render.
+  const rangeStart = useMemo(() => (view === 'week' ? weekStartOf(anchor) : anchor), [view, anchor]);
+  const rangeEnd = useMemo(() => addDays(rangeStart, view === 'week' ? 7 : 1), [view, rangeStart]);
+  const step = view === 'week' ? 7 : 1;
 
-  // Form defaults follow the visible week.
+  // Form defaults follow the visible range.
   useEffect(() => {
     const today = new Date();
-    const base = today >= weekStart && today < weekEnd ? today : weekStart;
+    const base = today >= rangeStart && today < rangeEnd ? today : rangeStart;
     const s = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 9, 0);
     setStartStr(toLocalInput(s));
     setEndStr(toLocalInput(new Date(s.getTime() + 2 * 3600_000)));
-  }, [weekStart, weekEnd]);
+  }, [rangeStart, rangeEnd]);
 
   /* ---------- what the Bryntum board shows ---------- */
   const shownResources = useMemo(
@@ -125,10 +143,14 @@ export default function OperationsClient() {
       .map((t) => ({
         id: t.id,
         resourceId: t.resourceId,
-        name: `${STATUS_MARK[t.status] ?? ''}${TYPE_LABEL[t.type]}: ${t.title}`,
+        // Week bars are one day wide, so they carry only the type; Day view and the tooltip show the title.
+        name: view === 'week' ? `${STATUS_MARK[t.status] ?? ''}${TYPE_LABEL[t.type]}` : `${STATUS_MARK[t.status] ?? ''}${TYPE_LABEL[t.type]}: ${t.title}`,
+        taskTitle: t.title,
         startDate: new Date(t.startDate),
         endDate: new Date(t.endDate),
         eventColor: TYPE_COLOR[t.type],
+        // Solid colours and dark text come from operations.css, picked by these two classes.
+        cls: `op-${t.type.toLowerCase()} ${STATUS_CLS[t.status] ?? ''}`,
         draggable: t.status !== 'DONE',
         resizable: t.status !== 'DONE',
         taskType: t.type,
@@ -137,7 +159,7 @@ export default function OperationsClient() {
         needLocation: t.need.location,
       }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [version, shownResources]);
+  }, [version, shownResources, view]);
 
   /* ---------- saving drag and resize ---------- */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -185,14 +207,14 @@ export default function OperationsClient() {
     const r = d?.eventRecord;
     if (!r) return '';
     const g = (k: string) => esc(String(r.get?.(k) ?? ''));
-    return `<div class="op-tip"><b>${esc(String(r.name ?? ''))}</b><br>${g('needTitle')}<br>${g('needLocation')}<br>${g('taskStatus').replace(/_/g, ' ').toLowerCase()}</div>`;
+    return `<div class="op-tip"><b>${g('taskTitle') || esc(String(r.name ?? ''))}</b><br>${g('needTitle')}<br>${g('needLocation')}<br>${g('taskStatus').replace(/_/g, ' ').toLowerCase()}</div>`;
   }, []);
 
   const eventTooltip = useMemo(() => ({ template: tooltip }), [tooltip]);
 
   /* ---------- actions ---------- */
   const selected = tasks.find((t) => t.id === selectedId) ?? null;
-  const resName = (id: string | null) => resources.find((r) => r.id === id)?.name ?? 'Unassigned';
+  const resName = useCallback((id: string | null) => resources.find((r) => r.id === id)?.name ?? 'Unassigned', [resources]);
 
   async function act(fn: () => Promise<{ ok: boolean; j: { error?: string } }>, okText: string) {
     setBusy(true);
@@ -256,6 +278,33 @@ export default function OperationsClient() {
     }
   }
 
+  /* ---------- the all-tasks table (AG Grid) ---------- */
+  const taskCols = useMemo<ColDef<TaskRow>[]>(
+    () => [
+      {
+        field: 'startDate',
+        headerName: 'When',
+        minWidth: 170,
+        sort: 'asc',
+        valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : ''),
+      },
+      { field: 'title', headerName: 'Task', flex: 1, minWidth: 170 },
+      { field: 'type', headerName: 'Type', minWidth: 120, valueFormatter: (p) => TYPE_LABEL[p.value as TaskType] ?? p.value },
+      { headerName: 'Need', flex: 1, minWidth: 160, valueGetter: (p) => p.data?.need.title ?? '' },
+      { headerName: 'Team', minWidth: 160, valueGetter: (p) => resName(p.data?.resourceId ?? null) },
+      { field: 'status', headerName: 'Status', minWidth: 120, valueFormatter: (p) => STATUS_LABEL[p.value] ?? p.value },
+    ],
+    [resName]
+  );
+
+  function exportTasksCsv() {
+    taskGrid.current?.api.exportDataAsCsv({
+      fileName: 'resurgence-operations-tasks-sandbox.csv',
+      // Stop spreadsheet formulas: a cell that starts with = + - @ is prefixed with an apostrophe.
+      processCellCallback: (c) => (typeof c.value === 'string' && /^[=+\-@\t\r]/.test(c.value) ? `'${c.value}` : c.value),
+    });
+  }
+
   const counts = {
     scheduled: tasks.filter((t) => t.status === 'SCHEDULED').length,
     progress: tasks.filter((t) => t.status === 'IN_PROGRESS').length,
@@ -266,6 +315,7 @@ export default function OperationsClient() {
   const needsSorted = [...data.needs].sort((a, b) => Number(b.status === 'FUNDED') - Number(a.status === 'FUNDED'));
   const evidenceNeedsFunding =
     EVIDENCE_TYPES.includes(type) && data.needs.find((n) => n.id === needId)?.status !== 'FUNDED' && !!needId;
+  const activeResources = resources.filter((r) => r.active);
 
   return (
     <div className="wrap op-page">
@@ -289,20 +339,20 @@ export default function OperationsClient() {
       </div>
 
       <div className="op-toolbar">
-        <div className="op-weeknav" role="group" aria-label="Week">
-          <button className="alt" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Previous week">←</button>
-          <button className="alt" onClick={() => setWeekStart(mondayOf(new Date()))}>Today</button>
-          <button className="alt" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Next week">→</button>
-          <strong className="op-range">{fmtRange(weekStart, weekEnd)}</strong>
-          <label className="op-inline">
-            Jump to
-            <input
-              type="date"
-              value={ymd(weekStart)}
-              onChange={(e) => e.target.value && setWeekStart(mondayOf(new Date(`${e.target.value}T00:00`)))}
-            />
-          </label>
+        <div className="op-nav" role="group" aria-label="Time range">
+          <button className="alt" onClick={() => setAnchor(addDays(anchor, -step))} aria-label={view === 'week' ? 'Previous week' : 'Previous day'}>←</button>
+          <button className="alt" onClick={() => setAnchor(startOfToday())}>Today</button>
+          <button className="alt" onClick={() => setAnchor(addDays(anchor, step))} aria-label={view === 'week' ? 'Next week' : 'Next day'}>→</button>
+          <strong className="op-range">{view === 'week' ? fmtRange(rangeStart, rangeEnd) : fmtDay(rangeStart)}</strong>
         </div>
+        <div className="op-seg" role="group" aria-label="View">
+          <button type="button" className="alt" aria-pressed={view === 'day'} onClick={() => setView('day')}>Day</button>
+          <button type="button" className="alt" aria-pressed={view === 'week'} onClick={() => setView('week')}>Week</button>
+        </div>
+        <label className="op-inline">
+          Jump to
+          <input type="date" value={ymd(anchor)} onChange={(e) => e.target.value && setAnchor(new Date(`${e.target.value}T00:00`))} />
+        </label>
         <label className="op-inline">
           Show
           <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
@@ -324,41 +374,99 @@ export default function OperationsClient() {
       </p>
 
       <div className="op-grid">
-        <section className="op-board" aria-label="Delivery schedule">
-          {!loaded ? (
-            <p className="op-empty">Loading schedule…</p>
-          ) : (
+        <div className="op-main">
+          <section className="op-board" aria-label="Delivery schedule">
+            {!loaded ? (
+              <p className="op-empty">Loading schedule…</p>
+            ) : (
               <>
-              <BryntumScheduler
-                height={480}
-                events={boardEvents as never}
-                resources={boardResources}
-                columns={COLUMNS}
-                startDate={weekStart}
-                endDate={weekEnd}
-                viewPreset="dayAndWeek"
-                zoomOnMouseWheel={false}
-                zoomOnTimeAxisDoubleClick={false}
-                rowHeight={54}
-                barMargin={6}
-                eventEditFeature={false}
-                eventDragCreateFeature={false}
-                eventTooltipFeature={eventTooltip}
-                onEventClick={onEventClick}
-                onAfterEventDrop={onDrop}
-                onEventResizeEnd={onResize}
-              />
-              {tasks.length === 0 && <p className="op-empty">No tasks yet. Schedule the first one with the form on the right.</p>}
-              <p className="op-hint">Drag a bar to move it or change its team. Drag its edge to change the time. Click a bar for details.</p>
-            </>
+                {/* key={view}: the board is rebuilt cleanly when you switch between Day and Week */}
+                <BryntumScheduler
+                  key={view}
+                  autoHeight
+                  fillTicks
+                  events={boardEvents as never}
+                  resources={boardResources}
+                  columns={COLUMNS}
+                  startDate={rangeStart}
+                  endDate={rangeEnd}
+                  viewPreset={view === 'week' ? 'dayAndWeek' : 'hourAndDay'}
+                  zoomOnMouseWheel={false}
+                  zoomOnTimeAxisDoubleClick={false}
+                  rowHeight={60}
+                  barMargin={8}
+                  eventEditFeature={false}
+                  eventDragCreateFeature={false}
+                  eventTooltipFeature={eventTooltip}
+                  onEventClick={onEventClick}
+                  onAfterEventDrop={onDrop}
+                  onEventResizeEnd={onResize}
+                />
+                {tasks.length === 0 && <p className="op-empty">No tasks yet. Schedule the first one with the form on the right.</p>}
+                <p className="op-hint">Drag a bar to move it or change its team. Drag its edge to change the time. Click a bar for details. Use Day for hour-level detail.</p>
+              </>
+            )}
+          </section>
+
+          {unassigned.length > 0 && (
+            <div className="op-card">
+              <h2>Unassigned tasks</h2>
+              <p className="op-sub">These have no team yet, so they are not on the timeline.</p>
+              <ul className="op-list">
+                {unassigned.map((t) => (
+                  <li key={t.id}>
+                    <span><i style={{ background: TYPE_COLOR[t.type] }} />{t.title}</span>
+                    <select
+                      aria-label={`Assign ${t.title}`}
+                      value=""
+                      disabled={busy}
+                      onChange={(e) => e.target.value && patch(t.id, { resourceId: e.target.value }, 'Assigned.')}
+                    >
+                      <option value="">Assign…</option>
+                      {activeResources.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                    </select>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
-        </section>
+
+          <section className="op-card" aria-label="All tasks">
+            <div className="op-card-head">
+              <h2>All tasks</h2>
+              {tasks.length > 0 && (
+                <div className="op-tools">
+                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tasks" aria-label="Search tasks" />
+                  <button className="alt" onClick={exportTasksCsv}>Export CSV</button>
+                </div>
+              )}
+            </div>
+            {tasks.length === 0 ? (
+              <p className="op-sub">Nothing scheduled yet.</p>
+            ) : (
+              <div className="ag-theme-quartz" style={{ height: Math.max(180, Math.min(tasks.length * 48 + 100, 420)) }}>
+                <AgGridReact<TaskRow>
+                  ref={taskGrid}
+                  rowData={tasks}
+                  columnDefs={taskCols}
+                  defaultColDef={{ sortable: true, resizable: true }}
+                  quickFilterText={q}
+                  getRowId={(p) => p.data.id}
+                  suppressMovableColumns
+                  rowSelection="single"
+                  onRowClicked={(e) => e.data && setSelectedId(e.data.id)}
+                  overlayNoRowsTemplate="No tasks match."
+                />
+              </div>
+            )}
+          </section>
+        </div>
 
         <aside className="op-side">
           <div className="op-card">
             <h2>{selected ? selected.title : 'Task details'}</h2>
             {!selected ? (
-              <p className="op-sub">Click a bar on the schedule to see it here.</p>
+              <p className="op-sub">Click a bar on the schedule, or a row in the table, to see it here.</p>
             ) : (
               <>
                 <dl className="op-facts">
@@ -405,61 +513,50 @@ export default function OperationsClient() {
                 <option key={n.id} value={n.id}>{n.title} · {LABEL[n.status] ?? n.status}</option>
               ))}
             </select>
-            <label htmlFor="op-type">Task type</label>
-            <select id="op-type" value={type} onChange={(e) => setType(e.target.value as TaskType)}>
-              {TASK_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
-            </select>
+            <div className="op-two">
+              <div>
+                <label htmlFor="op-type">Task type</label>
+                <select id="op-type" value={type} onChange={(e) => setType(e.target.value as TaskType)}>
+                  {TASK_TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="op-res">Assign to</label>
+                <select id="op-res" value={resourceId} onChange={(e) => setResourceId(e.target.value)}>
+                  <option value="">Unassigned</option>
+                  {activeResources.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              </div>
+            </div>
             {evidenceNeedsFunding && (
               <p className="op-sub op-warn">This need is not fully funded yet, so a {TYPE_LABEL[type].toLowerCase()} task can be scheduled but not finished.</p>
             )}
             <label htmlFor="op-title">Title (optional)</label>
             <input id="op-title" value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} placeholder="Defaults to the type and need" />
-            <label htmlFor="op-res">Assign to</label>
-            <select id="op-res" value={resourceId} onChange={(e) => setResourceId(e.target.value)}>
-              <option value="">Unassigned for now</option>
-              {resources.filter((r) => r.active).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-            <label htmlFor="op-start">Start</label>
-            <input
-              id="op-start"
-              type="datetime-local"
-              value={startStr}
-              onChange={(e) => {
-                setStartStr(e.target.value);
-                const s = new Date(e.target.value);
-                if (!isNaN(s.getTime()) && new Date(endStr) <= s) setEndStr(toLocalInput(new Date(s.getTime() + 2 * 3600_000)));
-              }}
-              required
-            />
-            <label htmlFor="op-end">End</label>
-            <input id="op-end" type="datetime-local" value={endStr} onChange={(e) => setEndStr(e.target.value)} required />
+            <div className="op-two">
+              <div>
+                <label htmlFor="op-start">Start</label>
+                <input
+                  id="op-start"
+                  type="datetime-local"
+                  value={startStr}
+                  onChange={(e) => {
+                    setStartStr(e.target.value);
+                    const s = new Date(e.target.value);
+                    if (!isNaN(s.getTime()) && new Date(endStr) <= s) setEndStr(toLocalInput(new Date(s.getTime() + 2 * 3600_000)));
+                  }}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="op-end">End</label>
+                <input id="op-end" type="datetime-local" value={endStr} onChange={(e) => setEndStr(e.target.value)} required />
+              </div>
+            </div>
             <label htmlFor="op-notes">Notes (optional)</label>
             <input id="op-notes" value={notes} maxLength={300} onChange={(e) => setNotes(e.target.value)} />
             <button type="submit" disabled={busy}>Schedule task</button>
           </form>
-
-          {unassigned.length > 0 && (
-            <div className="op-card">
-              <h2>Unassigned tasks</h2>
-              <p className="op-sub">These have no team yet, so they are not on the timeline.</p>
-              <ul className="op-list">
-                {unassigned.map((t) => (
-                  <li key={t.id}>
-                    <span><i style={{ background: TYPE_COLOR[t.type] }} />{t.title}</span>
-                    <select
-                      aria-label={`Assign ${t.title}`}
-                      value=""
-                      disabled={busy}
-                      onChange={(e) => e.target.value && patch(t.id, { resourceId: e.target.value }, 'Assigned.')}
-                    >
-                      <option value="">Assign…</option>
-                      {resources.filter((r) => r.active).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                    </select>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </aside>
       </div>
     </div>
