@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgCharts } from 'ag-charts-react';
+import '@/lib/agChartsSetup';
 import type { AgChartOptions } from 'ag-charts-community';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
+import '@/lib/agSetup';
+import { agTheme } from '@/lib/agTheme';
 import { send } from '@/lib/client';
 import { URGENCY_ORDER, makeMoney } from '@/lib/ledger';
 import { useThemeMode } from '@/lib/theme';
@@ -171,7 +172,7 @@ export default function AnalyticsClient() {
     ...base,
     data: data.days.slice(-14).map((d) => ({ ...d, label: d.date.slice(5) })),
     series: [{ type: 'bar', xKey: 'label', yKey: 'amount', yName: 'Captured' }],
-    axes: [{ type: 'category', position: 'bottom' }, moneyAxis],
+    axes: { x: { type: 'category', position: 'bottom' }, y: moneyAxis },
     legend: { enabled: false },
   };
 
@@ -179,7 +180,7 @@ export default function AnalyticsClient() {
     ...base,
     data: [...pipeline].reverse(),
     series: [{ type: 'bar', direction: 'horizontal', xKey: 'stage', yKey: 'n', yName: 'Needs', label: { enabled: true, formatter: (p) => String(Math.round(p.value)) } }],
-    axes: [{ type: 'category', position: 'left' }, { type: 'number', position: 'bottom', min: 0, interval: { minSpacing: 30 } }],
+    axes: { x: { type: 'category', position: 'left' }, y: { type: 'number', position: 'bottom', min: 0, interval: { minSpacing: 30 } } },
     legend: { enabled: false },
   };
 
@@ -195,7 +196,7 @@ export default function AnalyticsClient() {
     ...base,
     data: data.locations.slice(0, 8),
     series: [{ type: 'bar', direction: 'horizontal', xKey: 'location', yKey: 'families', yName: 'Families' }],
-    axes: [{ type: 'category', position: 'left' }, { type: 'number', position: 'bottom' }],
+    axes: { x: { type: 'category', position: 'left' }, y: { type: 'number', position: 'bottom' } },
     legend: { enabled: false },
   };
 
@@ -203,7 +204,7 @@ export default function AnalyticsClient() {
     ...base,
     data: data.verification.map((v) => ({ label: labelOf(v.type), count: v.count })),
     series: [{ type: 'bar', direction: 'horizontal', xKey: 'label', yKey: 'count', yName: 'Events recorded' }],
-    axes: [{ type: 'category', position: 'left' }, { type: 'number', position: 'bottom', interval: { minSpacing: 30 } }],
+    axes: { x: { type: 'category', position: 'left' }, y: { type: 'number', position: 'bottom', interval: { minSpacing: 30 } } },
     legend: { enabled: false },
   };
 
@@ -216,7 +217,7 @@ export default function AnalyticsClient() {
       { type: 'bar', xKey: 'date', yKey: 'rescued', yName: 'Rescued' },
       { type: 'bar', xKey: 'date', yKey: 'injured', yName: 'Injured' },
     ],
-    axes: [{ type: 'category', position: 'bottom' }, { type: 'number', position: 'left' }],
+    axes: { x: { type: 'category', position: 'bottom' }, y: { type: 'number', position: 'left' } },
     legend: { enabled: true, position: 'bottom' },
   };
 
@@ -227,7 +228,7 @@ export default function AnalyticsClient() {
       { type: 'bar', xKey: 'settlement', yKey: 'totalAssessed', yName: 'Buildings assessed' },
       { type: 'bar', xKey: 'settlement', yKey: 'affected', yName: 'Affected' },
     ],
-    axes: [{ type: 'category', position: 'bottom' }, { type: 'number', position: 'left' }],
+    axes: { x: { type: 'category', position: 'bottom' }, y: { type: 'number', position: 'left' } },
     legend: { enabled: true, position: 'bottom' },
   };
 
@@ -316,7 +317,7 @@ export default function AnalyticsClient() {
             <button className="alt" onClick={exportGap}>Export CSV</button>
           </div>
           <div className="ag-theme-quartz" style={{ height: gridH }}>
-            <AgGridReact<Gap> ref={grid} rowData={data.gaps} suppressMovableColumns columnDefs={cols} defaultColDef={{ sortable: true }} overlayNoRowsTemplate="No priced needs yet." />
+            <AgGridReact<Gap> theme={agTheme} ref={grid} rowData={data.gaps} suppressMovableColumns columnDefs={cols} defaultColDef={{ sortable: true }} overlayNoRowsTemplate="No priced needs yet." />
           </div>
         </div>
 

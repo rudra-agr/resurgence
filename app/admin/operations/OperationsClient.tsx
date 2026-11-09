@@ -5,8 +5,8 @@ import '@bryntum/scheduler/fontawesome/css/fontawesome.css';
 import '@bryntum/scheduler/fontawesome/css/solid.css';
 import '@bryntum/scheduler/scheduler.css';
 import '@bryntum/scheduler/svalbard-light.css';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
+import '@/lib/agSetup';
+import { agTheme } from '@/lib/agTheme';
 import './operations.css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BryntumScheduler } from '@bryntum/scheduler-react';
@@ -445,7 +445,7 @@ export default function OperationsClient() {
               <p className="op-sub">Nothing scheduled yet.</p>
             ) : (
               <div className="ag-theme-quartz" style={{ height: Math.max(180, Math.min(tasks.length * 48 + 100, 420)) }}>
-                <AgGridReact<TaskRow>
+                <AgGridReact<TaskRow> theme={agTheme}
                   ref={taskGrid}
                   rowData={tasks}
                   columnDefs={taskCols}
