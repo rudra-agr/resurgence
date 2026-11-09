@@ -31,7 +31,7 @@ export function SiteNav() {
   // Admin keeps Needs and Donations ledger because purchase/delivery evidence and refunds are done there.
   const staffLinks: [string, string][] =
     me?.role === 'ADMIN'
-      ? [['/admin/analytics', 'Analytics'], ['/admin/operations', 'Operations'], ['/needs', 'Needs'], ['/donations', 'Donations ledger']]
+      ? [['/admin/analytics', 'Analytics'], ['/admin/operations', 'Operations'], ['/admin/studio', 'Studio'], ['/needs', 'Needs'], ['/donations', 'Donations ledger']]
       : me?.role === 'COORDINATOR'
         ? [['/coordinator', 'My dashboard'], ...(me.coordinatorId ? ([['/post', 'Post a need']] as [string, string][]) : []), ['/needs', 'Needs']]
         : [];
