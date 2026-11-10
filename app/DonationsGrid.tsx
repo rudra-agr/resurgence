@@ -3,8 +3,8 @@
 import { useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
+import '@/lib/agSetup';
+import { agTheme } from '@/lib/agTheme';
 import type { Donation } from '@/lib/types';
 import { send } from '@/lib/client';
 
@@ -78,7 +78,7 @@ export default function DonationsGrid({ donations, money, cur, isAdmin, onChange
         <button className="alt" onClick={exportCsv}>Export CSV</button>
       </div>
       <div className="ag-theme-quartz" style={{ height: 460 }}>
-        <AgGridReact<Donation>
+        <AgGridReact<Donation> theme={agTheme}
           ref={grid}
           rowData={donations}suppressMovableColumns
           columnDefs={cols}

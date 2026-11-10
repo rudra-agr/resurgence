@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
+import '@/lib/agSetup';
+import { agTheme } from '@/lib/agTheme';
 import './coordinator.css';
 import { useLedger } from '../Providers';
 import { send } from '@/lib/client';
@@ -200,7 +200,7 @@ export default function CoordinatorClient() {
             <button onClick={exportCsv}>Export CSV</button>
           </div>
           <div className="ag-theme-quartz" style={{ height: Math.max(180, Math.min(data.activity.length * 48 + 100, 520)) }}>
-            <AgGridReact<ActivityRow>
+            <AgGridReact<ActivityRow> theme={agTheme}
               ref={grid}
               rowData={data.activity}
               columnDefs={cols}

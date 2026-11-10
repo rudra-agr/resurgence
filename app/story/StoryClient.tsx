@@ -9,8 +9,8 @@ import { NPR_PER_USD, usd } from '@/lib/fx';
 /* resurgence-patch: usd-charts */
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ValueFormatterParams } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
+import '@/lib/agSetup';
+import { agTheme } from '@/lib/agTheme';
 
 type Contribution = {
   id: string; contributor: string; type: string; scope: string;
@@ -380,7 +380,7 @@ export function StoryClient({ contributions, snapshots }: {
             <p className="s-grid-label">International contributions &amp; pledges</p>
             <div className="s-grid-scroll">
               <div className={`${gridTheme} s-grid-inner`}>
-                <AgGridReact
+                <AgGridReact theme={agTheme}
                   columnDefs={intlCols}
                   rowData={intlData}
                   defaultColDef={defaultColDef}
@@ -398,7 +398,7 @@ export function StoryClient({ contributions, snapshots }: {
             <p className="s-grid-label">National &amp; corporate contributions</p>
             <div className="s-grid-scroll">
               <div className={`${gridTheme} s-grid-inner`}>
-                <AgGridReact
+                <AgGridReact theme={agTheme}
                   columnDefs={natCols}
                   rowData={natData}
                   defaultColDef={defaultColDef}

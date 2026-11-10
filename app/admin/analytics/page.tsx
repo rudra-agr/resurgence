@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
-import AnalyticsClient from './AnalyticsClient';
+import AnalyticsTabs from './AnalyticsTabs';
 
 export const metadata: Metadata = { title: 'Analytics', robots: { index: false } };
 
-export default function AnalyticsPage() {
-  return <AnalyticsClient />;
+// /admin/analytics shows Overview; ?tab=studio opens Studio.
+export default function AnalyticsPage({ searchParams }: { searchParams: { tab?: string | string[] } }) {
+  return <AnalyticsTabs initialTab={searchParams.tab === 'studio' ? 'studio' : 'overview'} />;
 }

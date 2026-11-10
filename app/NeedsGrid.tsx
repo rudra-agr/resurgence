@@ -4,8 +4,8 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AgGridReact } from 'ag-grid-react';
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
+import '@/lib/agSetup';
+import { agTheme } from '@/lib/agTheme';
 import { slug, stageOf } from '@/lib/ledger';
 import type { NeedRow } from '@/lib/types';
 
@@ -82,7 +82,7 @@ export default function NeedsGrid({ needs, money }: { needs: NeedRow[]; money: (
       </div>
       <p className="note">Select a row to open its proof trail.</p>
       <div className="ag-theme-quartz" style={{ height: 420 }}>
-        <AgGridReact<NeedRow>
+        <AgGridReact<NeedRow> theme={agTheme}
           rowData={rows}suppressMovableColumns
           columnDefs={cols}
           defaultColDef={{ sortable: true, resizable:false }}
