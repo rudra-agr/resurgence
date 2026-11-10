@@ -219,6 +219,7 @@ th { font: 500 0.72rem/1.4 var(--font-mono); text-transform: uppercase; letter-s
 .ov-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--s6); align-items: start; }
 @media (max-width: 860px) { .ov-grid { grid-template-columns: 1fr; } }
 .needlist { margin: var(--s2) 0 0; padding: 0; list-style: none; }
+.needs-toggle { display: block; margin-top: var(--s3); padding: var(--s2) 0; font-size: 0.95rem; }
 button.needrow {
   display: flex; width: 100%; align-items: center; justify-content: space-between; gap: var(--s3);
   padding: var(--s3) var(--s2); border: 0; border-bottom: 1px solid var(--rule); border-left: 4px solid transparent;

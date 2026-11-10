@@ -6,6 +6,7 @@ import type { AgFieldDefinition } from 'ag-studio';
 import { AgStudio, AgStudioProvider } from 'ag-studio-react';
 import { send } from '@/lib/client';
 import savedState from './studioDefaultState.json';
+import { studioWidgets } from './studioWidgets';
 import { INTERVALS, useLiveFeed } from './useLiveFeed';
 import type { Interval } from './useLiveFeed';
 
@@ -25,25 +26,54 @@ const lookAndFeel = studioTheme.withParams({
   studioWidgetBorderRadius: 8,
 });
 
+// The reading view has no side panels: the filters sit inside the dashboard, like the AG Studio demo.
+const PANELS = { view: { right: [] }, edit: { right: ['filters', 'edit', 'data'] } } as const;
+
+// The dashboard is 32 rows tall at 20px a row, plus the canvas padding. The reading view is exactly that
+// tall, so there is no blank strip underneath. If you change the layout's height, change this too.
+const VIEW_HEIGHT = 32 * 20 + 28;
+
 type Rows = Record<string, unknown>[];
-type StudioData = { sources: ({ id: string; data: Rows } | { id: string; name: string; data: Rows; fields: AgFieldDefinition[] })[] };
+type Source = { id: string; name?: string; data: Rows; fields?: AgFieldDefinition[] };
+type StudioData = { sources: Source[] };
+
+const money = { format: 'decimalFormat' as const, formatOptions: { format: '#,##0.00' } };
+
+// Needs, with explicit types so money, counts and the funded percentage format the same everywhere.
+const NEEDS_FIELDS: AgFieldDefinition[] = [
+  { id: 'title', name: 'Need', format: 'textFormat' },
+  { id: 'location', name: 'Location', format: 'textFormat' },
+  { id: 'families', name: 'Families', format: 'integerFormat' },
+  { id: 'urgency', name: 'Urgency', format: 'textFormat' },
+  { id: 'status', name: 'Status', format: 'textFormat' },
+  { id: 'target', name: 'Target (USD)', ...money },
+  { id: 'raised', name: 'Raised (USD)', ...money },
+  { id: 'gap', name: 'Still needed (USD)', ...money },
+  { id: 'fundedPct', name: 'Funded (%)', format: 'integerFormat' },
+  { id: 'fundedRatio', name: 'Funded', format: 'percentageFormat', formatOptions: { format: '#,##0%' } },
+  { id: 'gapPerFamily', name: 'Gap per family (USD)', ...money },
+  { id: 'raisedPerFamily', name: 'Raised per family (USD)', ...money },
+  { id: 'raised7d', name: 'Last 7 days (USD)', ...money },
+  { id: 'priced', name: 'Pricing', format: 'textFormat' },
+  { id: 'created', name: 'Created', format: 'textFormat' },
+];
 
 // The live donations table: one row per recent donation, newest first. Time is plain text in
-// "yyyy-mm-dd hh:mm:ss" so it reads the same everywhere and still sorts correctly.
+// "mm-dd hh:mm" so it reads the same everywhere and still sorts correctly.
 const LIVE_FIELDS: AgFieldDefinition[] = [
   { id: 'id', name: 'ID', format: 'textFormat', hide: true },
   { id: 'time', name: 'Time', format: 'textFormat' },
   { id: 'need', name: 'Need', format: 'textFormat' },
   { id: 'location', name: 'Location', format: 'textFormat' },
   { id: 'amountNpr', name: 'Amount (Rs)', format: 'integerFormat' },
-  { id: 'amountUsd', name: 'Amount (USD)', format: 'decimalFormat', formatOptions: { format: '#,##0.00' } },
+  { id: 'amountUsd', name: 'Amount (USD)', ...money },
   { id: 'status', name: 'Status', format: 'textFormat' },
   { id: 'mode', name: 'Mode', format: 'textFormat' },
 ];
 const two = (n: number) => String(n).padStart(2, '0');
 const stamp = (iso: string) => {
   const d = new Date(iso);
-  return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}`;
+  return `${two(d.getMonth() + 1)}-${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`;
 };
 
 // Switching analytics tabs unmounts Studio. The latest layout is kept here so unsaved edits come back
@@ -74,7 +104,7 @@ export default function StudioPanel() {
     const live = (j.live as { at: string }[]).map((r) => ({ ...r, time: stamp(r.at) }));
     setData({
       sources: [
-        { id: 'needs', data: j.needs },
+        { id: 'needs', name: 'Needs', data: j.needs, fields: NEEDS_FIELDS },
         { id: 'donations', data: j.donations },
         { id: 'live', name: 'Live donations', data: live, fields: LIVE_FIELDS },
       ],
@@ -116,9 +146,9 @@ export default function StudioPanel() {
   if (!data) return <div className="wrap an-panel"><p className="note">Loading Studio…</p></div>;
 
   const studio = (
-    <div className="an-studio-canvas">
+    <div className="an-studio-canvas" style={editing ? undefined : { height: VIEW_HEIGHT, minHeight: 0 }}>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <AgStudio ref={studioRef} data={data} mode={editing ? 'edit' : 'view'} theme={lookAndFeel} initialState={initial as any} onStateUpdated={onStateUpdated} />
+      <AgStudio ref={studioRef} data={data} mode={editing ? 'edit' : 'view'} theme={lookAndFeel} widgets={studioWidgets} panels={PANELS as any} initialState={initial as any} onStateUpdated={onStateUpdated} />
     </div>
   );
 

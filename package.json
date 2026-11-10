@@ -11,7 +11,8 @@
     "audit": "npm audit --omit=dev --audit-level=high",
     "test": "tsx --test tests/*.test.ts",
     "seed:disaster": "tsx prisma/seed_disaster.ts",
-    "seed:operations": "tsx prisma/seed_operations.ts"
+    "seed:operations": "tsx prisma/seed_operations.ts",
+    "seed:demo": "tsx prisma/seed_demo.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

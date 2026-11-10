@@ -56,7 +56,7 @@ export default function ProductPanel({
 
   async function search() {
     setBusy(true);
-    setMsg('Searching retailers via Channel3…');
+    setMsg('Searching retailers…');
     const { ok, j } = await send(`/api/needs/${need.id}/products`);
     setBusy(false);
     if (!ok) return setMsg(j.error || 'Search failed.');
@@ -126,7 +126,7 @@ export default function ProductPanel({
   // Coordinator view.
   return (
     <div>
-      <button onClick={search} disabled={busy || locked}>Find live products (Channel3)</button>
+      <button onClick={search} disabled={busy || locked}>Find products</button>
       {locked && <p className="note">Donations exist, so products are locked.</p>}
       {msg && <p className="err">{msg}</p>}
       {view.items.map((it) => {
