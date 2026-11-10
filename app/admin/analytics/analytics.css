@@ -83,3 +83,28 @@
   .an-chart { min-height: 230px; }
   .an-tools { gap: var(--s2); }
 }
+
+/* Tabs: Overview / Studio. The dark theme gives every button dark text, so colours here use !important. */
+.an-tabs-wrap { padding-top: var(--s4); }
+.an-tabs { display: flex; gap: var(--s1); border-bottom: 1px solid var(--rule); }
+.an-tabs .an-tab { background: transparent !important; color: var(--ink-soft) !important; border: 0; border-bottom: 3px solid transparent; border-radius: 0; margin-bottom: -1px; padding: var(--s2) var(--s4); font: 500 0.95rem/1.4 var(--font-body); cursor: pointer; }
+.an-tabs .an-tab:hover { color: var(--ink) !important; }
+.an-tabs .an-tab[aria-selected='true'] { color: var(--ink) !important; border-bottom-color: var(--accent); }
+.an-tabs .an-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Live and Studio panels. */
+.an-panel { padding-block: var(--s5) var(--s6); max-width: 1440px; }
+.an-studio-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s4); padding-top: var(--s3); padding-bottom: var(--s3); }
+.an-studio-title { display: flex; align-items: baseline; gap: var(--s3); }
+.an-studio-title h1 { margin: 0; font: 600 1.3rem/1.2 var(--font-display); letter-spacing: 0; }
+.an-studio-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); }
+.an-studio-head button { padding: 0.4rem 0.85rem; font-size: 0.875rem; }
+.an-studio-live { font: 500 0.75rem/1.4 var(--font-mono); color: var(--ink-soft); white-space: nowrap; }
+.an-studio-live[data-running='true']::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: #2e8b57; }
+.an-studio-every { display: flex; align-items: center; gap: var(--s2); font-size: 0.85rem; color: var(--ink-soft); white-space: nowrap; }
+.an-studio-every select { width: auto; padding: 0.3rem 0.5rem; font-size: 0.85rem; }
+.an-studio-msg { flex: 1 1 100%; margin: 0; }
+.an-studio-fit { max-width: 1440px; padding-bottom: var(--s4); }
+.an-studio-full { width: 100%; }
+/* The canvas fills what is left of the screen after the site header, tabs and this toolbar. */
+.an-studio-canvas { height: calc(100vh - 270px); min-height: 480px; width: 100%; }

@@ -30,6 +30,13 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 module.exports = {
   poweredByHeader: false,
+  // The Live and Studio pages now live inside Analytics (the live table is part of Studio). Old links and bookmarks still land in the right place.
+  async redirects() {
+    return [
+      { source: '/admin/live', destination: '/admin/analytics?tab=studio', permanent: false },
+      { source: '/admin/studio', destination: '/admin/analytics?tab=studio', permanent: false },
+    ];
+  },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
