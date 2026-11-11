@@ -148,7 +148,7 @@ export default function StudioPanel() {
   const studio = (
     <div className="an-studio-canvas" style={editing ? undefined : { height: VIEW_HEIGHT, minHeight: 0 }}>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <AgStudio ref={studioRef} data={data} mode={editing ? 'edit' : 'view'} theme={lookAndFeel} widgets={studioWidgets} panels={PANELS as any} initialState={initial as any} onStateUpdated={onStateUpdated} />
+      <AgStudio className="site-studio" ref={studioRef} data={data} mode={editing ? 'edit' : 'view'} theme={lookAndFeel} widgets={studioWidgets} panels={PANELS as any} initialState={initial as any} onStateUpdated={onStateUpdated} />
     </div>
   );
 

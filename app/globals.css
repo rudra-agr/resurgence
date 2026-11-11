@@ -267,3 +267,12 @@ div.ag-theme-quartz, div.ag-theme-quartz-dark {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* site-studio palette */
+.site-studio {
+  --ag-chart-palette-fills-1-color: #2f8f68;
+  --ag-chart-palette-fills-2-color: #b83f0c;
+  --ag-chart-palette-fills-3-color: #1b6f8a;
+  --ag-chart-palette-fills-4-color: #d9b72f;
+  --ag-chart-palette-fills-5-color: #6b7a88;
+}
