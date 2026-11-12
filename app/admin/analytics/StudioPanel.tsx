@@ -125,7 +125,7 @@ export default function StudioPanel() {
     if (!json) return setNote('Studio is not ready yet.');
     try {
       await navigator.clipboard.writeText(json);
-      setNote('Layout copied. Paste it into app/admin/analytics/studioDefaultState.json');
+      setNote('Layout copied.');
     } catch {
       setNote('Copy was blocked. Use Download layout instead.');
     }
@@ -139,7 +139,7 @@ export default function StudioPanel() {
     a.download = 'studioDefaultState.json';
     a.click();
     URL.revokeObjectURL(a.href);
-    setNote('Downloaded. Move it to app/admin/analytics/studioDefaultState.json');
+    setNote('Downloaded.');
   };
 
   if (error && !data) return <div className="wrap an-panel"><p className="err" role="alert">{error}</p></div>;

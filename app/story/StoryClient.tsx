@@ -517,9 +517,10 @@ export function StoryClient({ contributions, snapshots }: {
         <p>Data sourced from NDRRMA, OPMCM, and published humanitarian reports. Figures current as of late 2026.</p>
         <div className="s-sponsor-row">
           <span className="s-sponsor-label">Built with</span>
-          <span className="s-sponsor-badge">AG Grid</span>
-          <span className="s-sponsor-badge">Byrunti</span>
+          <span className="s-sponsor-badge">AG Grid/Studio</span>
+          <span className="s-sponsor-badge">Bryntum</span>
           <span className="s-sponsor-badge">Channel3</span>
+          <span className="s-sponsor-badge">Render</span>
         </div>
       </footer>
     </div>
