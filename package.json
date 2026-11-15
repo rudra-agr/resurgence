@@ -22,7 +22,7 @@
     "@bryntum/scheduler-react": "7.3.8",
     "@paypal/react-paypal-js": "8.7.0",
     "@prisma/client": "6.19.3",
-    "ag-charts-community": "14.2",
+    "ag-charts-community": "14.3",
     "ag-charts-react": "14.2",
     "ag-grid-community": "36.2",
     "ag-grid-react": "36.2",
